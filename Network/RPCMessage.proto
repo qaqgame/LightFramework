@@ -1,0 +1,29 @@
+syntax = "proto3";
+package Network;
+
+message RPCMessage {
+    string Name = 1;
+    repeated RPCRawArg RPCRawArgs = 2;
+}
+
+message RPCRawArg {
+    bytes RawValue = 1;
+    RPCArgType RawValueType = 2;
+}
+
+enum RPCArgType {
+    Unknown = 0;
+    INT = 1;
+    UInt = 2;
+    Long = 3;
+    ULong = 4;
+    Short = 5;
+    UShort = 6;
+    Double = 7;
+    Float = 8;
+    String = 9;
+    Byte = 10;
+    Bool = 11;
+    Bytes = 12;
+    PBObject = 13;
+}
