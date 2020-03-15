@@ -6,9 +6,11 @@ type ServerManager struct {
 	ServerModules    map[int]ServerModule
 }
 
-func (smr *ServerManager) Init() {
+func NewServerManager() *ServerManager {
 	log.Println("ServerManager Init")
+	smr := new(ServerManager)
 	smr.ServerModules = make(map[int]ServerModule)
+	return smr
 }
 
 func (smr *ServerManager) StartServer(id int) {

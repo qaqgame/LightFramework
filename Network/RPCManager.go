@@ -10,8 +10,10 @@ type RPCManager struct {
 	mListListener      map[string][]reflect.Method
 }
 
-func (rmr *RPCManager) Init() {
+func NewRPCManager() *RPCManager {
+	rmr := new(RPCManager)
 	rmr.mListListener = make(map[string][]reflect.Method,0)
+	return rmr
 }
 
 func (rmr *RPCManager) Clean() {

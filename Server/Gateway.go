@@ -40,7 +40,7 @@ func NewGateway(_port int, _listener ISessionListener) *Gateway {
 	return gateway
 }
 
-func (gateway *Gateway) Init() {
+func (gateway *Gateway) Initialize() {
 	gateway.start()
 }
 
