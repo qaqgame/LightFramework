@@ -2,7 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5deb2835-5c3e-4c31-a936-78dacb053077" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/Server/NetManager.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Server/NetManager_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Network/RPCManager.go" beforeDir="false" afterPath="$PROJECT_DIR$/Network/RPCManager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Network/RPCManager_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/Network/RPCManager_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Network/RPCMessageActions.go" beforeDir="false" afterPath="$PROJECT_DIR$/Network/RPCMessageActions.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -50,7 +55,29 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Test.TestRPCManager_GetMethod in code.holdonbush.top/ServerFramework/Network">
+  <component name="RunManager" selected="Go Test.TestRPCManager_GetMethod in code.holdonbush.top/ServerFramework/Network (1)">
+    <configuration name="TestNetManager_HandleRPCMessage in code.holdonbush.top/ServerFramework/Server" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="ServerFramework" />
+      <working_directory value="$PROJECT_DIR$/Server" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="code.holdonbush.top/ServerFramework/Server" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestNetManager_HandleRPCMessage$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestRPCManager_GetMethod in code.holdonbush.top/ServerFramework/Network (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="ServerFramework" />
+      <working_directory value="$PROJECT_DIR$/Network" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="code.holdonbush.top/ServerFramework/Network" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <pattern value="^TestRPCManager_GetMethod$" />
+      <method v="2" />
+    </configuration>
     <configuration name="TestRPCManager_GetMethod in code.holdonbush.top/ServerFramework/Network" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="ServerFramework" />
       <working_directory value="$PROJECT_DIR$/Network" />
@@ -86,6 +113,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestRPCManager_GetMethod in code.holdonbush.top/ServerFramework/Network (1)" />
+        <item itemvalue="Go Test.TestNetManager_HandleRPCMessage in code.holdonbush.top/ServerFramework/Server" />
         <item itemvalue="Go Test.TestRPCManager_GetMethod in code.holdonbush.top/ServerFramework/Network" />
         <item itemvalue="Go Test.TestRPCRawArg_SetValue in code.holdonbush.top/ServerFramework/Network" />
         <item itemvalue="Go Test.TestRPCMessage_String in code.holdonbush.top/ServerFramework/Network" />
@@ -103,7 +132,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>

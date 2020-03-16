@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"encoding/binary"
 	"math"
+	"reflect"
 	"strconv"
 )
 
-func (rm *RPCMessage) GetArgs() []interface{} {
-	args := make([]interface{}, len(rm.RPCRawArgs))
+func (rm *RPCMessage) GetArgs() []reflect.Value {
+	args := make([]reflect.Value, len(rm.RPCRawArgs))
 	for i := 0; i < len(rm.RPCRawArgs); i++ {
 		args = append(args, rm.RPCRawArgs[i].Value())
 	}
 	return args
 }
 
-func (rm *RPCMessage) SetArgs(args []interface{}) {
+func (rm *RPCMessage) SetArgs(args ...interface{}) {
 	for i := 0; i < len(args); i++ {
 		rawArg := RPCRawArg{}
 		rawArg.SetValue(args[i])
@@ -23,30 +24,30 @@ func (rm *RPCMessage) SetArgs(args []interface{}) {
 	}
 }
 
-func (rra *RPCRawArg) Value() interface{} {
+func (rra *RPCRawArg) Value() reflect.Value {
 	if rra.RawValue == nil {
-		return nil
+		return reflect.ValueOf(nil)
 	}
 	switch rra.RawValueType {
 	case RPCArgType_INT, RPCArgType_UInt:
-		return binary.BigEndian.Uint32(rra.RawValue)
+		return reflect.ValueOf(binary.BigEndian.Uint32(rra.RawValue))
 	case RPCArgType_Long, RPCArgType_ULong:
-		return binary.BigEndian.Uint64(rra.RawValue)
+		return reflect.ValueOf(binary.BigEndian.Uint64(rra.RawValue))
 	case RPCArgType_Short, RPCArgType_UShort:
-		return binary.BigEndian.Uint16(rra.RawValue)
+		return reflect.ValueOf(binary.BigEndian.Uint16(rra.RawValue))
 	case RPCArgType_Float:
-		return math.Float32frombits(binary.BigEndian.Uint32(rra.RawValue))
+		return reflect.ValueOf(math.Float32frombits(binary.BigEndian.Uint32(rra.RawValue)))
 	case RPCArgType_Double:
-		return math.Float64frombits(binary.BigEndian.Uint64(rra.RawValue))
+		return reflect.ValueOf(math.Float64frombits(binary.BigEndian.Uint64(rra.RawValue)))
 	case RPCArgType_String:
-		return string(rra.RawValue)
+		return reflect.ValueOf(string(rra.RawValue))
 	case RPCArgType_Bytes, RPCArgType_PBObject:
-		return rra.RawValue
+		return reflect.ValueOf(rra.RawValue)
 	case RPCArgType_Bool:
 		b, _ := strconv.ParseBool(string(rra.RawValue))
-		return b
+		return reflect.ValueOf(b)
 	}
-	return nil
+	return reflect.ValueOf(nil)
 }
 
 func (rra *RPCRawArg) SetValue(v interface{}) {
