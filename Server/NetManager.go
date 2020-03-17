@@ -8,7 +8,7 @@ import (
 )
 
 type NetManager struct {
-	gateway           *Gateway
+	Gateway           *Gateway
 	rpc               *Network.RPCManager
 	authCmd           uint32
 	lastRPCMethod     string
@@ -17,9 +17,10 @@ type NetManager struct {
 }
 
 func NewNetManager(port int) *NetManager {
+	log.Println("new NetManager")
 	n := new(NetManager)
 	g := NewGateway(port, n)
-	n.gateway = g
+	n.Gateway = g
 	n.rpc = new(Network.RPCManager)
 	n.mapListenerHelper = make(map[uint32]*ListenerHelper)
 
@@ -27,9 +28,9 @@ func NewNetManager(port int) *NetManager {
 }
 
 func (netManager *NetManager) Clean() {
-	if netManager.gateway != nil {
-		netManager.gateway.Clean()
-		netManager.gateway = nil
+	if netManager.Gateway != nil {
+		netManager.Gateway.Clean()
+		netManager.Gateway = nil
 	}
 
 	if netManager.rpc != nil {
@@ -39,7 +40,7 @@ func (netManager *NetManager) Clean() {
 }
 
 func (netManager *NetManager) Tick() {
-	netManager.Tick()
+	netManager.Gateway.Tick()
 }
 
 func (netManager *NetManager) OnReceive(session ISession, bytes []byte, length int) {
@@ -50,6 +51,7 @@ func (netManager *NetManager) OnReceive(session ISession, bytes []byte, length i
 			rpcmsg := Network.DeserializeRPCMsg(msg.Content)
 			netManager.HandleRPCMessage(session,rpcmsg)
 		} else {
+			log.Println("Use Proto Handler")
 			netManager.HandlePBMessage(session,msg)
 		}
 	} else {
@@ -160,6 +162,10 @@ func (netManager *NetManager) RegisterRPCListener(listener interface{}) {
 	netManager.rpc.RegisterObj(listener)
 }
 
+func (netManager *NetManager) RegisterRPCMethod(listener interface{}, name string) {
+	netManager.rpc.RegisterMethod(listener,name)
+}
+
 func (netManager *NetManager) UnRegisterRPCListener(listener interface{}) {
 	netManager.rpc.UnRegisterObj(listener)
 }
@@ -176,7 +182,10 @@ func (netManager *NetManager) HandlePBMessage(session ISession, pb *Network.NetM
 	helper := netManager.mapListenerHelper[pb.Head.Cmd]
 	if helper != nil {
 		obj := helper.TMsg
-		_ = proto.Unmarshal(pb.Content, obj)
+		err := proto.Unmarshal(pb.Content, obj)
+		if err != nil {
+			log.Println("unmarshal content error: ",err)
+		}
 		if obj != nil {
 			//in := []reflect.Value{reflect.ValueOf(session),reflect.ValueOf(pb.Head.Index),reflect.ValueOf(obj)}
 			//helper.onMsg.Func.Call(in)

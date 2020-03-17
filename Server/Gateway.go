@@ -25,6 +25,7 @@ type Gateway struct {
 }
 
 func NewGateway(_port int, _listener ISessionListener) *Gateway {
+	log.Println("New Gateway")
 	gateway := new(Gateway)
 	gateway.port = _port
 	gateway.listener = _listener
@@ -37,6 +38,8 @@ func NewGateway(_port int, _listener ISessionListener) *Gateway {
 	gateway.closeSignal = make(chan int, 2)
 	gateway.rwMutex = sync.RWMutex{}
 
+	gateway.Initialize()
+
 	return gateway
 }
 
@@ -45,9 +48,10 @@ func (gateway *Gateway) Initialize() {
 }
 
 func (gateway *Gateway) start() {
+	log.Println("start Gateway")
 	gateway.isRunning = true
 
-	udpAddr,err := net.ResolveUDPAddr("udp4","127.0.0.1:"+strconv.Itoa(gateway.port))
+	udpAddr,err := net.ResolveUDPAddr("udp4",":"+strconv.Itoa(gateway.port))
 	if err != nil {
 		log.Fatal("Start gateway err(resolveUDPAddr): ",err)
 	}
@@ -82,6 +86,7 @@ func (gateway *Gateway) GetSession(sid uint32) ISession {
 
 // 接受数据的协程
 func (gateway *Gateway) Recv() {
+	log.Println("start recv goroutine")
 	gateway.recvRunning = true
 
 	for gateway.isRunning {

@@ -41,7 +41,12 @@ func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener) *KCP
 	kcpSession.Kcp = kcp.NewKCP(_sid, kcpSession.HandKcpSend)
 	kcpSession.Kcp.NoDelay(1,10,2,1)
 	kcpSession.Kcp.WndSize(128,128)
+	kcpSession.Initialize()
 	return kcpSession
+}
+
+func (kcpSession *KCPSession) Initialize() {
+	go kcpSession.DoReceiveInMain()
 }
 
 func (kcpSession *KCPSession) HandKcpSend(buf []byte, size int) {
