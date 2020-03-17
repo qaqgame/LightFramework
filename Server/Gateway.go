@@ -51,15 +51,17 @@ func (gateway *Gateway) start() {
 	log.Println("start Gateway")
 	gateway.isRunning = true
 
-	udpAddr,err := net.ResolveUDPAddr("udp4",":"+strconv.Itoa(gateway.port))
+	udpAddr,err := net.ResolveUDPAddr("udp4","0.0.0.0:"+strconv.Itoa(gateway.port))
 	if err != nil {
 		log.Fatal("Start gateway err(resolveUDPAddr): ",err)
 	}
 
-	gateway.conn,err  = net.ListenUDP("udp",udpAddr)
+	gateway.conn,err  = net.ListenUDP("udp4",udpAddr)
 	if err != nil {
 		log.Fatal("Start gateway err(listenUdp): ", err)
 	}
+
+	log.Println("Listen udp:",gateway.port,udpAddr)
 
 	go gateway.Recv()
 }
@@ -106,27 +108,33 @@ func (gateway *Gateway) Recv() {
 }
 
 func (gateway *Gateway) DoReceiveInGoroutine() {
+	log.Println("Start receive in goroutine")
 	sidBuf := make([]byte,4)
 	n, addr, err := gateway.conn.ReadFromUDP(gateway.recvBuf)
 	if err != nil {
 		log.Println("error DoReceiveInThread err: ",err)
 	}
+	log.Println("Received data: ", n)
 	if n > 0 {
 		//buferReader := bytes.NewBuffer(gateway.recvBuf)
 		//_,_ = buferReader.Read(sidBuf)
 
-		sidBuf = gateway.recvBuf[:4]
+		sidBuf = gateway.recvBuf[25:29]
 
 		var kcpsession ISession = nil
-		convId := binary.BigEndian.Uint32(sidBuf)
-		if convId == 0 {
+		uid := binary.BigEndian.Uint32(sidBuf)
+		log.Println("read ",uid)
+
+		if uid == 0 {
+			log.Println("uid : ", uid)
 			sid := SId.NewId()
 			kcpsession = NewKCPSession(sid, gateway.HandSessionSender, gateway.listener)
 			gateway.rwMutex.Lock()
 			gateway.mapSession[sid]=kcpsession
 			gateway.rwMutex.Unlock()
 		} else {
-			kcpsession = gateway.mapSession[convId]
+			log.Println("uid != 0")
+			kcpsession = gateway.mapSession[uid]
 		}
 
 		if kcpsession != nil {

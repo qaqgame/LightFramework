@@ -44,6 +44,7 @@ func (netManager *NetManager) Tick() {
 }
 
 func (netManager *NetManager) OnReceive(session ISession, bytes []byte, length int) {
+	log.Println("onreceive buf lenght: ",len(bytes))
 	msg := Network.DeserializeNetMsg(bytes)
 
 	if session.IsAuth() {

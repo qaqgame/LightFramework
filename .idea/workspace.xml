@@ -3,8 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="5deb2835-5c3e-4c31-a936-78dacb053077" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Network/RPCManager_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/Network/RPCManager_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Network/RPCManager.go" beforeDir="false" afterPath="$PROJECT_DIR$/Network/RPCManager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Network/Serialize.go" beforeDir="false" afterPath="$PROJECT_DIR$/Network/Serialize.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/Gateway.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/Gateway.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Server/ISession.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/ISession.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/KCPSession.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/KCPSession.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/NetManager.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/NetManager.go" afterDir="false" />
     </list>

@@ -51,7 +51,7 @@ func (rmr *RPCManager) UnRegisterMethod(listener interface{}, name string) {
 }
 
 func (rmr *RPCManager) GetMethod(listener interface{},methodName string) *reflect.Method {
-	for _,v := range rmr.mListListener[reflect.TypeOf(listener).String()] {
+	for _,v := range rmr.mListListener[reflect.ValueOf(listener).Type().String()] {
 		fmt.Println(v.Name)
 		if v.Name == methodName {
 			return v

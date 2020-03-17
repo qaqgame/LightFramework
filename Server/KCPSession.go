@@ -110,7 +110,7 @@ func (kcpSession *KCPSession) GetRemoteEndPoint() *net.UDPAddr {
 }
 
 func (kcpSession *KCPSession) DoReceiveInGateWay(buf []byte, size int) {
-	kcpSession.recvData <- buf
+	kcpSession.recvData <- buf[:size]
 }
 
 func (kcpSession *KCPSession) DoReceiveInMain() {
@@ -119,10 +119,17 @@ func (kcpSession *KCPSession) DoReceiveInMain() {
 		case data := <-kcpSession.recvData:
 			ret := kcpSession.Kcp.Input(data,true,true)
 			if ret < 0 {
-				log.Println("not a correct package")
+				log.Println("not a correct package ",ret)
 				return
 			}
 			kcpSession.needKCPUpdate = true
+			//for size := kcpSession.Kcp.PeekSize() {
+			//
+			//	buf := make([]byte,size)
+			//	if kcpSession.Kcp.Recv(buf) > 0 {
+			//		kcpSession.listener.OnReceive(kcpSession, buf, size)
+			//	}
+			//}
 			for size := kcpSession.Kcp.PeekSize(); size > 0; size = kcpSession.Kcp.PeekSize()  {
 				buf := make([]byte,size)
 				if kcpSession.Kcp.Recv(buf) > 0 {

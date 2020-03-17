@@ -1,6 +1,7 @@
 package Server
 
 import (
+	"log"
 	"net"
 	"time"
 )
@@ -27,10 +28,12 @@ type ISessionListener interface {
 	OnReceive(session ISession, bytes []byte, length int)
 }
 
-var SId *sessionId
-var refTime time.Time
+var SId = &sessionId{0}
+var refTime time.Time = time.Now()
+
 
 func Init() {
+	log.Println("init sessionid")
 	SId = &sessionId{0}
 	refTime = time.Now()
 }
