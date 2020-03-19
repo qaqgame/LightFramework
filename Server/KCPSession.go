@@ -20,33 +20,43 @@ type KCPSession struct {
 	lastActiveTime int64
 	nextUpdateTime uint32
 	active         bool
-	recvData       chan []byte
+	recvData       *chan []byte
+	recvDate2       *chan []byte
 	needKCPUpdate  bool
 
 	Kcp      *kcp.KCP
 }
 
-func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener) *KCPSession {
+func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpconv uint32) *KCPSession {
 	kcpSession := new(KCPSession)
 	kcpSession.sid = _sid
+	kcpSession.userid = _sid
 	kcpSession.sender = _sender
 	kcpSession.listener = _listener
 
 	kcpSession.lastActiveTime = 0
 	kcpSession.nextUpdateTime= 0
 	kcpSession.active = false
-	kcpSession.recvData = make(chan []byte,10)
+	c1 := make(chan []byte, 128)
+	kcpSession.recvData = &c1
+	c2 := make(chan []byte, 128)
+	kcpSession.recvDate2 = &c2
+
 	kcpSession.needKCPUpdate = false
 
-	kcpSession.Kcp = kcp.NewKCP(_sid, kcpSession.HandKcpSend)
+	kcpSession.Kcp = kcp.NewKCP(kcpconv, kcpSession.HandKcpSend)
 	kcpSession.Kcp.NoDelay(1,10,2,1)
 	kcpSession.Kcp.WndSize(128,128)
-	kcpSession.Initialize()
+	// kcpSession.Initialize()
 	return kcpSession
 }
 
-func (kcpSession *KCPSession) Initialize() {
+func (kcpSession *KCPSession) Initialize()  {
 	go kcpSession.DoReceiveInMain()
+}
+
+func (kcpSession *KCPSession) SetUserId(uid uint32) {
+	kcpSession.userid = uid
 }
 
 func (kcpSession *KCPSession) HandKcpSend(buf []byte, size int) {
@@ -102,7 +112,9 @@ func (kcpSession *KCPSession) Send(cnt []byte, length int) bool {
 		log.Println("Client close")
 		return false
 	}
-	return kcpSession.Kcp.Send(cnt) > 0
+	i := kcpSession.Kcp.Send(cnt)
+	log.Println("KCPSession *kcpSession.Send() i: ",i)
+	return i > 0
 }
 
 func (kcpSession *KCPSession) GetRemoteEndPoint() *net.UDPAddr {
@@ -110,13 +122,18 @@ func (kcpSession *KCPSession) GetRemoteEndPoint() *net.UDPAddr {
 }
 
 func (kcpSession *KCPSession) DoReceiveInGateWay(buf []byte, size int) {
-	kcpSession.recvData <- buf[:size]
+	*kcpSession.recvData <- buf[:size]
 }
 
+
 func (kcpSession *KCPSession) DoReceiveInMain() {
+	tmp := kcpSession.recvData
+	kcpSession.recvData = kcpSession.recvDate2
+	kcpSession.recvDate2 = tmp
 	for true {
 		select {
-		case data := <-kcpSession.recvData:
+		case data := <- *kcpSession.recvDate2:
+			log.Println("KCPSession DeReceiveInMain:",len(data))
 			ret := kcpSession.Kcp.Input(data,true,true)
 			if ret < 0 {
 				log.Println("not a correct package ",ret)
@@ -136,6 +153,8 @@ func (kcpSession *KCPSession) DoReceiveInMain() {
 					kcpSession.listener.OnReceive(kcpSession, buf, size)
 				}
 			}
+		default:
+			return
 		}
 	}
 }

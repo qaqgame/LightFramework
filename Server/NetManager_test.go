@@ -3,14 +3,22 @@ package Server
 import (
 	"code.holdonbush.top/ServerFramework/Network"
 	"fmt"
-	"reflect"
+	"github.com/golang/protobuf/proto"
 	"testing"
 )
 
 func TestNetManager_HandleRPCMessage(t *testing.T) {
-	kcp := NewKCPSession(1,nil,nil)
-	n := NewNetManager(222)
-	rpc := Network.RPCMessage{Name:"222"}
-	n.HandleRPCMessage(kcp,&rpc)
-	fmt.Println(reflect.TypeOf(kcp).String())
+
+	t1 := new(Network.ProtocolHead)
+	t1.Cmd = 1
+	t1.UId = 2
+	t1.CheckSum = 3
+	t1.DataSize = 4
+	t1.Index = 5
+
+	v,_ := proto.Marshal(t1)
+	t2 := new(Network.ProtocolHead)
+	proto.Unmarshal(v, t2)
+	fmt.Println(t2)
+
 }

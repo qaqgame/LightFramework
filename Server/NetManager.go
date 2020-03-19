@@ -2,6 +2,7 @@ package Server
 
 import (
 	"code.holdonbush.top/ServerFramework/Network"
+	"fmt"
 	"github.com/golang/protobuf/proto"
 	"log"
 	"reflect"
@@ -183,10 +184,12 @@ func (netManager *NetManager) HandlePBMessage(session ISession, pb *Network.NetM
 	helper := netManager.mapListenerHelper[pb.Head.Cmd]
 	if helper != nil {
 		obj := helper.TMsg
+		fmt.Println("HandlePBMessge: ",helper.TMsg,obj,obj.(proto.Message),reflect.TypeOf(obj),reflect.TypeOf(obj.(proto.Message)))
 		err := proto.Unmarshal(pb.Content, obj)
 		if err != nil {
 			log.Println("unmarshal content error: ",err)
 		}
+		fmt.Println("unmarshaled: ",obj)
 		if obj != nil {
 			//in := []reflect.Value{reflect.ValueOf(session),reflect.ValueOf(pb.Head.Index),reflect.ValueOf(obj)}
 			//helper.onMsg.Func.Call(in)
@@ -199,6 +202,7 @@ func (netManager *NetManager) HandlePBMessage(session ISession, pb *Network.NetM
 
 func (netManager *NetManager) Send(session ISession, index, cmd uint32, msg proto.Message) {
 	netmsg := Network.NetMessage{}
+	netmsg.Head = &Network.ProtocolHead{}
 	netmsg.Head.Index = index
 	netmsg.Head.Cmd = cmd
 	netmsg.Head.UId = session.GetUid()

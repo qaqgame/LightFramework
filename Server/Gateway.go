@@ -108,32 +108,37 @@ func (gateway *Gateway) Recv() {
 }
 
 func (gateway *Gateway) DoReceiveInGoroutine() {
-	log.Println("Start receive in goroutine")
+	log.Println(time.Now().Unix(),"Start receive in goroutine")
 	sidBuf := make([]byte,4)
+
+	// lis,err := kcp.DialWithOptions(":"+strconv.Itoa(gateway.port),nil,0,0)
+
+
 	n, addr, err := gateway.conn.ReadFromUDP(gateway.recvBuf)
 	if err != nil {
 		log.Println("error DoReceiveInThread err: ",err)
 	}
-	log.Println("Received data: ", n)
+	log.Println(time.Now().Unix(),"Received data: ", n)
 	if n > 0 {
 		//buferReader := bytes.NewBuffer(gateway.recvBuf)
 		//_,_ = buferReader.Read(sidBuf)
 
-		sidBuf = gateway.recvBuf[25:29]
+		sidBuf = gateway.recvBuf[24:28]
 
 		var kcpsession ISession = nil
 		uid := binary.BigEndian.Uint32(sidBuf)
 		log.Println("read ",uid)
 
 		if uid == 0 {
-			log.Println("uid : ", uid)
 			sid := SId.NewId()
-			kcpsession = NewKCPSession(sid, gateway.HandSessionSender, gateway.listener)
+			kcpsession = NewKCPSession(sid, gateway.HandSessionSender, gateway.listener,1)
+			log.Println("sid = ", sid)
 			gateway.rwMutex.Lock()
 			gateway.mapSession[sid]=kcpsession
 			gateway.rwMutex.Unlock()
 		} else {
-			log.Println("uid != 0")
+			log.Println(gateway.recvBuf[:n])
+			log.Println("uid != 0, uid = ",uid)
 			kcpsession = gateway.mapSession[uid]
 		}
 
@@ -147,14 +152,19 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 }
 
 func (gateway *Gateway) HandSessionSender(session ISession,buf []byte, size int) {
+	log.Println(time.Now().Unix(),"sid: ",session.GetId())
+	log.Println("Gateway *Gateway.HandSessionSender() size",size,len(buf))
 	if gateway.conn != nil {
-		_, err := gateway.conn.WriteToUDP(buf, session.GetRemoteEndPoint())
+		n, err := gateway.conn.WriteToUDP(buf[:size], session.GetRemoteEndPoint())
+		log.Println("写了",n,"字节")
 		if err != nil {
 			log.Println("HandSessionSender error: ",err)
 		}
 	} else {
 		log.Println("HandSessionSender: conn has been closed")
 	}
+
+	log.Println(time.Now().Unix(),"end send")
 }
 
 func (gateway *Gateway) Tick() {
