@@ -2,9 +2,8 @@ package Server
 
 import (
 	"code.holdonbush.top/ServerFramework/Network"
-	"fmt"
 	"github.com/golang/protobuf/proto"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"reflect"
 )
 
@@ -15,17 +14,23 @@ type NetManager struct {
 	lastRPCMethod     string
 	lastRPCISession   ISession
 	mapListenerHelper map[uint32]*ListenerHelper
+	logger            *log.Entry
 }
 
-func NewNetManager(port int) *NetManager {
-	log.Println("new NetManager")
+func NewNetManager(port int, logger *log.Entry) *NetManager {
+	//log.Println("new NetManager")
 	n := new(NetManager)
+	n.logger = logger
 	g := NewGateway(port, n)
 	n.Gateway = g
 	n.rpc = new(Network.RPCManager)
 	n.mapListenerHelper = make(map[uint32]*ListenerHelper)
-
+	n.logger.Info("NetManager Created")
 	return n
+}
+
+func (netManager *NetManager) GetLogger() *log.Entry {
+	return netManager.logger
 }
 
 func (netManager *NetManager) Clean() {
@@ -45,7 +50,8 @@ func (netManager *NetManager) Tick() {
 }
 
 func (netManager *NetManager) OnReceive(session ISession, bytes []byte, length int) {
-	log.Println("onreceive buf lenght: ",len(bytes))
+	//log.Println("onreceive buf lenght: ",len(bytes))
+	netManager.logger.Debug("OnReceive in NetManager, receive data len: ",len(bytes))
 	msg := Network.DeserializeNetMsg(bytes)
 
 	if session.IsAuth() {
@@ -53,14 +59,16 @@ func (netManager *NetManager) OnReceive(session ISession, bytes []byte, length i
 			rpcmsg := Network.DeserializeRPCMsg(msg.Content)
 			netManager.HandleRPCMessage(session,rpcmsg)
 		} else {
-			log.Println("Use Proto Handler")
+			//log.Println("Use Proto Handler")
+			netManager.logger.Debug("OnReceive in NetManager, Use HandlePBMessage")
 			netManager.HandlePBMessage(session,msg)
 		}
 	} else {
 		if msg.Head.Cmd == netManager.authCmd {
 			netManager.HandlePBMessage(session,msg)
 		} else {
-			log.Println("UnAuth cmd message")
+			//log.Println("UnAuth cmd message")
+			netManager.logger.Debug("OnReceive in NetManager, UnAuth cmd message")
 		}
 	}
 }
@@ -85,7 +93,8 @@ func (netManager *NetManager) HandleRPCMessage(session ISession, rpc *Network.RP
 					t := m.Type.In(i+1)
 					err := proto.Unmarshal(rawArgs[i].RawValue, t.(proto.Message))
 					if err != nil {
-						log.Println("error handlerrpcmessage: ",err)
+						//log.Println("error handlerrpcmessage: ",err)
+						netManager.logger.Error("HandleRPCMessage in NetManager, error Unmarshal: ",err)
 					}
 					v[i] = reflect.ValueOf(t.(proto.Message))
 				}
@@ -98,10 +107,12 @@ func (netManager *NetManager) HandleRPCMessage(session ISession, rpc *Network.RP
 			netManager.lastRPCISession = nil
 			netManager.lastRPCMethod = ""
 		} else {
-			log.Println("parameters num is not same")
+			//log.Println("parameters num is not same")
+			netManager.logger.Debug("HandleRPCMessage in NetManager, RPC function's parameters num is not same")
 		}
 	} else {
-		log.Println("message is not exist")
+		//log.Println("message is not exist")
+		netManager.logger.Debug("HandleRPCMessage in NetManage, Method not found")
 	}
 }
 
@@ -184,19 +195,23 @@ func (netManager *NetManager) HandlePBMessage(session ISession, pb *Network.NetM
 	helper := netManager.mapListenerHelper[pb.Head.Cmd]
 	if helper != nil {
 		obj := helper.TMsg
-		fmt.Println("HandlePBMessge: ",helper.TMsg,obj,obj.(proto.Message),reflect.TypeOf(obj),reflect.TypeOf(obj.(proto.Message)))
+		//fmt.Println("HandlePBMessge: ",helper.TMsg,obj,obj.(proto.Message),reflect.TypeOf(obj),reflect.TypeOf(obj.(proto.Message)))
+		netManager.logger.Debug("HandlePBMessage in NetManager, TMsg type is",obj)
 		err := proto.Unmarshal(pb.Content, obj)
 		if err != nil {
-			log.Println("unmarshal content error: ",err)
+			//log.Println("unmarshal content error: ",err)
+			netManager.logger.Warn("HandlePBMessage in NetManager, Unmarshal content error:",err)
 		}
-		fmt.Println("unmarshaled: ",obj)
+		//fmt.Println("unmarshaled: ",obj)
+		netManager.logger.Debug("HandlePBMessage in NetManager, Unmarshal result:", obj)
 		if obj != nil {
 			//in := []reflect.Value{reflect.ValueOf(session),reflect.ValueOf(pb.Head.Index),reflect.ValueOf(obj)}
 			//helper.onMsg.Func.Call(in)
 			helper.onMsg(session, pb.Head.Index, obj)
 		}
 	} else {
-		log.Println("no listener")
+		//log.Println("no listener")
+		netManager.logger.Debug("HandlePBMessage in NetManager, listener not found")
 	}
 }
 

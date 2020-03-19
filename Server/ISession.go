@@ -1,7 +1,7 @@
 package Server
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"time"
 )
@@ -26,14 +26,17 @@ type ISession interface {
 
 type ISessionListener interface {
 	OnReceive(session ISession, bytes []byte, length int)
+	GetLogger() *log.Entry
 }
 
-var SId = &sessionId{0}
-var refTime time.Time = time.Now()
+//var SId = &sessionId{0}
+//var refTime time.Time = time.Now()
 
+var SId *sessionId
+var refTime time.Time
 
-func Init() {
-	log.Println("init sessionid")
+func init() {
+	log.WithFields(log.Fields{}).Info("Init ISession initialize data")
 	SId = &sessionId{0}
 	refTime = time.Now()
 }

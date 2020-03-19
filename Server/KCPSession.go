@@ -1,8 +1,8 @@
 package Server
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/xtaci/kcp-go"
-	"log"
 	"net"
 	"time"
 )
@@ -23,12 +23,15 @@ type KCPSession struct {
 	recvData       *chan []byte
 	recvDate2       *chan []byte
 	needKCPUpdate  bool
+	logger         *log.Entry
 
 	Kcp      *kcp.KCP
 }
 
-func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpconv uint32) *KCPSession {
+func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpconv uint32, logger *log.Entry) *KCPSession {
 	kcpSession := new(KCPSession)
+	kcpSession.logger = logger
+	kcpSession.logger.Info("New a KCPSession")
 	kcpSession.sid = _sid
 	kcpSession.userid = _sid
 	kcpSession.sender = _sender
@@ -48,6 +51,8 @@ func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpc
 	kcpSession.Kcp.NoDelay(1,10,2,1)
 	kcpSession.Kcp.WndSize(128,128)
 	// kcpSession.Initialize()
+
+	kcpSession.logger.Info("KCPSession Created")
 	return kcpSession
 }
 
@@ -109,11 +114,13 @@ func (kcpSession *KCPSession) SetAuth(userId uint32) {
 
 func (kcpSession *KCPSession) Send(cnt []byte, length int) bool {
 	if !kcpSession.IsActive() {
-		log.Println("Client close")
+		//log.Println("Client close")
+		kcpSession.logger.Info("Client Closed, Send failed")
 		return false
 	}
 	i := kcpSession.Kcp.Send(cnt)
-	log.Println("KCPSession *kcpSession.Send() i: ",i)
+	//log.Println("KCPSession *kcpSession.Send() i: ",i)
+	kcpSession.logger.Debug("Send successfully, data len: ", i)
 	return i > 0
 }
 
@@ -133,10 +140,12 @@ func (kcpSession *KCPSession) DoReceiveInMain() {
 	for true {
 		select {
 		case data := <- *kcpSession.recvDate2:
-			log.Println("KCPSession DeReceiveInMain:",len(data))
+			//log.Println("KCPSession DeReceiveInMain:",len(data))
+			kcpSession.logger.Debug("DoReceiveInMain of KCPSession received data len: ", len(data))
 			ret := kcpSession.Kcp.Input(data,true,true)
 			if ret < 0 {
-				log.Println("not a correct package ",ret)
+				//log.Println("not a correct package ",ret)
+				log.Warn("DeReceiveInMain of KCPSession, data is not a correct package, input ret: ",ret)
 				return
 			}
 			kcpSession.needKCPUpdate = true

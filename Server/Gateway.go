@@ -2,7 +2,7 @@ package Server
 
 import (
 	"encoding/binary"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"strconv"
 	"sync"
@@ -22,13 +22,16 @@ type Gateway struct {
 
 	recvRunning     bool
 	rwMutex         sync.RWMutex
+	logger          *log.Entry
 }
 
 func NewGateway(_port int, _listener ISessionListener) *Gateway {
-	log.Println("New Gateway")
+	//log.Println("New Gateway")
 	gateway := new(Gateway)
 	gateway.port = _port
 	gateway.listener = _listener
+	gateway.logger = _listener.GetLogger()
+	gateway.logger.Info("New a Gateway")
 
 	gateway.mapSession = make(map[uint32]ISession)
 	gateway.recvRunning = false
@@ -40,6 +43,7 @@ func NewGateway(_port int, _listener ISessionListener) *Gateway {
 
 	gateway.Initialize()
 
+	gateway.logger.Info("Gateway Created")
 	return gateway
 }
 
@@ -48,7 +52,7 @@ func (gateway *Gateway) Initialize() {
 }
 
 func (gateway *Gateway) start() {
-	log.Println("start Gateway")
+	gateway.logger.Info("Gateway Started")
 	gateway.isRunning = true
 
 	udpAddr,err := net.ResolveUDPAddr("udp4","0.0.0.0:"+strconv.Itoa(gateway.port))
@@ -60,8 +64,9 @@ func (gateway *Gateway) start() {
 	if err != nil {
 		log.Fatal("Start gateway err(listenUdp): ", err)
 	}
-
-	log.Println("Listen udp:",gateway.port,udpAddr)
+	//
+	//log.Println("Listen udp:",gateway.port,udpAddr)
+	gateway.logger.Debug("Listen UDP: ",gateway.port, udpAddr)
 
 	go gateway.Recv()
 }
@@ -88,7 +93,7 @@ func (gateway *Gateway) GetSession(sid uint32) ISession {
 
 // 接受数据的协程
 func (gateway *Gateway) Recv() {
-	log.Println("start recv goroutine")
+	gateway.logger.Info("Start Recv Goroutine of Gateway")
 	gateway.recvRunning = true
 
 	for gateway.isRunning {
@@ -108,7 +113,7 @@ func (gateway *Gateway) Recv() {
 }
 
 func (gateway *Gateway) DoReceiveInGoroutine() {
-	log.Println(time.Now().Unix(),"Start receive in goroutine")
+	gateway.logger.Info("in function DoReceiveInGoroutine of Gateway")
 	sidBuf := make([]byte,4)
 
 	// lis,err := kcp.DialWithOptions(":"+strconv.Itoa(gateway.port),nil,0,0)
@@ -116,29 +121,31 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 
 	n, addr, err := gateway.conn.ReadFromUDP(gateway.recvBuf)
 	if err != nil {
-		log.Println("error DoReceiveInThread err: ",err)
+		//log.Println("error DoReceiveInThread err: ",err)
+		gateway.logger.Error("error DoReceiveInGoroutine of Gateway: ", err)
 	}
-	log.Println(time.Now().Unix(),"Received data: ", n)
+	//log.Println(time.Now().Unix(),"Received data: ", n)
+	gateway.logger.Debug("Received data from UDP in Gateway, length is ", n)
 	if n > 0 {
-		//buferReader := bytes.NewBuffer(gateway.recvBuf)
-		//_,_ = buferReader.Read(sidBuf)
-
 		sidBuf = gateway.recvBuf[24:28]
 
 		var kcpsession ISession = nil
 		uid := binary.BigEndian.Uint32(sidBuf)
-		log.Println("read ",uid)
-
+		//log.Println("read ",uid)
+		gateway.logger.Debug("Uid part of ProtocolHead is ", uid)
 		if uid == 0 {
+			gateway.logger.Debug("Uid is 0")
 			sid := SId.NewId()
-			kcpsession = NewKCPSession(sid, gateway.HandSessionSender, gateway.listener,1)
-			log.Println("sid = ", sid)
+			kcpsession = NewKCPSession(sid, gateway.HandSessionSender, gateway.listener,1,gateway.logger)
+			//log.Println("sid = ", sid)
+			gateway.logger.Debug("KCPSession created is : ",sid)
 			gateway.rwMutex.Lock()
 			gateway.mapSession[sid]=kcpsession
 			gateway.rwMutex.Unlock()
 		} else {
-			log.Println(gateway.recvBuf[:n])
-			log.Println("uid != 0, uid = ",uid)
+			//log.Println(gateway.recvBuf[:n])
+			//log.Println("uid != 0, uid = ",uid)
+			gateway.logger.Info("Uid isn't 0 but is ", uid)
 			kcpsession = gateway.mapSession[uid]
 		}
 
@@ -146,25 +153,32 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 			kcpsession.Active(addr)
 			kcpsession.DoReceiveInGateWay(gateway.recvBuf,n)
 		} else {
-			log.Println("useless package in DoReceiveInGoroutine")
+			//log.Println("useless package in DoReceiveInGoroutine")
+			gateway.logger.Warn("DeReceiveInGoroutine of Gateway, KCPSession is nil")
 		}
 	}
 }
 
 func (gateway *Gateway) HandSessionSender(session ISession,buf []byte, size int) {
-	log.Println(time.Now().Unix(),"sid: ",session.GetId())
-	log.Println("Gateway *Gateway.HandSessionSender() size",size,len(buf))
+	//log.Println(time.Now().Unix(),"sid: ",session.GetId())
+	gateway.logger.Debug("HandSessionSender in Gateway, session's id is ",session.GetId())
+	//log.Println("Gateway *Gateway.HandSessionSender() size",size,len(buf))
+	gateway.logger.Debug("HandSessionSender in Gateway, data size is ",size)
 	if gateway.conn != nil {
 		n, err := gateway.conn.WriteToUDP(buf[:size], session.GetRemoteEndPoint())
-		log.Println("写了",n,"字节")
+		//log.Println("写了",n,"字节")
+		gateway.logger.Debug("HandSessionSender in Gateway, Write",n,"byte to UDPConn")
 		if err != nil {
-			log.Println("HandSessionSender error: ",err)
+			//log.Println("HandSessionSender error: ",err)
+			gateway.logger.Error("HandSessionSender in Gateway, Write to UDPConn error", err)
 		}
 	} else {
-		log.Println("HandSessionSender: conn has been closed")
+		//log.Println("HandSessionSender: conn has been closed")
+		gateway.logger.Warn("HandSessionSender in Gateway, UDPConn has been closed")
 	}
 
-	log.Println(time.Now().Unix(),"end send")
+	//log.Println(time.Now().Unix(),"end send")
+	gateway.logger.Debug("HandSessionSender in Gateway, End of write to UDPConn")
 }
 
 func (gateway *Gateway) Tick() {
