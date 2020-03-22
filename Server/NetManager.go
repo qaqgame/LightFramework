@@ -17,10 +17,13 @@ type NetManager struct {
 	logger            *log.Entry
 }
 
-func NewNetManager(port int, logger *log.Entry) *NetManager {
+func NewNetManager(port int,arg ...interface{}) *NetManager {
 	//log.Println("new NetManager")
+
 	n := new(NetManager)
-	n.logger = logger
+	if len(arg) == 1 {
+		n.logger = arg[0].(*log.Entry)
+	}
 	g := NewGateway(port, n)
 	n.Gateway = g
 	n.rpc = new(Network.RPCManager)

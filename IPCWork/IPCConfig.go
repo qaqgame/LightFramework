@@ -9,12 +9,12 @@ import (
 )
 
 type IPCInfo struct {
-	Id   int
-	Port int
+	Id   int `json:"Id"`
+	Port int `json:"Port"`
 }
 
 type IPCInfoUnMarshal struct {
-	IPCInfos      []IPCInfo
+	IPCInfos      []IPCInfo  `json:"IPCInfoUnMarshal"`
 }
 
 const (
@@ -41,14 +41,16 @@ func readConfig() {
 	}
 
 	cnt, err := ioutil.ReadAll(f)
-	IPCInfo := IPCInfoUnMarshal{}
-	err = json.Unmarshal(cnt, &IPCInfo)
+	fmt.Println("read: ",string(cnt))
+	IPC := IPCInfoUnMarshal{}
+	err = json.Unmarshal(cnt, &IPC)
 	if err != nil {
 		fmt.Println("readConfig error:",err)
 	}
-
-	for _,v := range IPCInfo.IPCInfos {
+	fmt.Println("len",len(IPC.IPCInfos))
+	for _,v := range IPC.IPCInfos {
 		mapIPCInfo[v.Id] = v
+		fmt.Println(v.Id, v.Port)
 	}
 }
 

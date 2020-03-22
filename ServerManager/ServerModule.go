@@ -1,32 +1,50 @@
 package ServerManager
 
-import "log"
+import log "github.com/sirupsen/logrus"
 
 type ServerModule struct {
 	MInfo        ServerModuleInfo
+	logger       *log.Entry
 }
 
-func (sm *ServerModule) Id() int {
+type Server interface {
+	GetId() int
+	Create(info ServerModuleInfo)
+	Release()
+	Start()
+	Stop()
+	Tick()
+	IsCreated() bool
+	GetModuleInfo() ServerModuleInfo
+}
+
+func (sm *ServerModule) GetId() int {
 	return sm.MInfo.Id
 }
 
 func (sm *ServerModule) Create(info ServerModuleInfo) {
 	sm.MInfo = info
-	log.Println(sm.MInfo.Name," Created")
+	sm.logger = log.WithFields(log.Fields{"Server":info.Name})
+	sm.logger.Info("Server Created")
 }
 
 func (sm *ServerModule) Release() {
-	log.Println(sm.MInfo.Name," Released")
+	sm.logger.Info("Server Released")
 }
 
 func (sm *ServerModule) Start() {
-	log.Println(sm.MInfo.Name," Started")
+	sm.logger.Info("Server Started")
+
 }
 
 func (sm *ServerModule) Stop() {
-	log.Println(sm.MInfo.Name," Stopped")
+	sm.logger.Info("Server Stoped")
 }
 
 func (sm *ServerModule) Tick() {
 
+}
+
+func (sm *ServerModule) GetModuleInfo() ServerModuleInfo{
+	return ServerModuleInfo{}
 }

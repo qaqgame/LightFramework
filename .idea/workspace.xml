@@ -2,13 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5deb2835-5c3e-4c31-a936-78dacb053077" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/IPCWork/IPCManager.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/Gateway.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/Gateway.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/ISession.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/ISession.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Server/KCPSession.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/KCPSession.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IPCWork/IPCConfig.go" beforeDir="false" afterPath="$PROJECT_DIR$/IPCWork/IPCConfig.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IPCWork/IPCMessage.go" beforeDir="false" afterPath="$PROJECT_DIR$/IPCWork/IPCMessage.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Server/NetManager.go" beforeDir="false" afterPath="$PROJECT_DIR$/Server/NetManager.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServerManager/ServerConfig.go" beforeDir="false" afterPath="$PROJECT_DIR$/ServerManager/ServerConfig.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServerManager/ServerManager.go" beforeDir="false" afterPath="$PROJECT_DIR$/ServerManager/ServerManager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServerManager/ServerModule.go" beforeDir="false" afterPath="$PROJECT_DIR$/ServerManager/ServerModule.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -36,7 +37,7 @@
     <property name="configurable.Project.GOPATH.is.expanded" value="true" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../FinalCheckmateServer" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="preferences.sourceCode" />
   </component>
   <component name="RecentsManager">

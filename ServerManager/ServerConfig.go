@@ -37,6 +37,17 @@ func GetServerModuleInfo(id int) ServerModuleInfo {
 	return mapServerModuleInfo[id]
 }
 
+func GetAllServerModuleInfo() []ServerModuleInfo {
+	if len(mapServerModuleInfo) == 0 {
+		readConfig()
+	}
+	ans := make([]ServerModuleInfo,len(mapServerModuleInfo))
+	for k,v := range mapServerModuleInfo{
+		ans[k] = v
+	}
+	return ans
+}
+
 func readConfig() {
 	log.Println("Read Config file")
 	f, err := os.Open(filename)
