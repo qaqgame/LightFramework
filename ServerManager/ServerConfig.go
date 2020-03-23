@@ -9,13 +9,13 @@ import (
 )
 
 type ServerModuleInfo struct {
-	Id   int
-	Name string
-	Port int
+	Id   int     `json:"Id"`
+	Name string  `json:"Name"`
+	Port int     `json:"Port"`
 }
 
 type ConfigUnMarshal struct {
-	ServerModuleInfos  []ServerModuleInfo
+	ServerModuleInfos  []ServerModuleInfo     `json:"ConfigUnMarshal"`
 }
 
 const (
