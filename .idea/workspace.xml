@@ -3,10 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="5deb2835-5c3e-4c31-a936-78dacb053077" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/IPCWork/IPCManager.go" beforeDir="false" afterPath="$PROJECT_DIR$/IPCWork/IPCManager.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ServerManager/ServerConfig.go" beforeDir="false" afterPath="$PROJECT_DIR$/ServerManager/ServerConfig.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ServerManager/ServerManager.go" beforeDir="false" afterPath="$PROJECT_DIR$/ServerManager/ServerManager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IPCWork/IPCConfig.go" beforeDir="false" afterPath="$PROJECT_DIR$/IPCWork/IPCConfig.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ServerManager/ServerModule.go" beforeDir="false" afterPath="$PROJECT_DIR$/ServerManager/ServerModule.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />

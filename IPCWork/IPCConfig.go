@@ -14,11 +14,11 @@ type IPCInfo struct {
 }
 
 type IPCInfoUnMarshal struct {
-	IPCInfos      []IPCInfo  `json:"IPCInfoUnMarshal"`
+	IPCInfos      []IPCInfo  `json:"ServerModuleInfos"`
 }
 
 const (
-	filename = "IPCConfig.json"
+	filename = "ServerConfig.json"
 )
 
 var (

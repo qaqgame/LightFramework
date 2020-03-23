@@ -1,10 +1,29 @@
 package ServerManager
 
-import log "github.com/sirupsen/logrus"
+import (
+	"code.holdonbush.top/ServerFramework/IPCWork"
+	log "github.com/sirupsen/logrus"
+	"time"
+)
 
 type ServerModule struct {
 	MInfo        ServerModuleInfo
-	logger       *log.Entry
+	Logger       *log.Entry
+
+	// changes
+	status       int
+	closeChan    chan int
+	Ipc          *IPCWork.IPCManager
+}
+
+func NewServerModule(info ServerModuleInfo, _logger *log.Entry, _status int, _close chan int, _ipc *IPCWork.IPCManager) *ServerModule {
+	servermodule := new(ServerModule)
+	servermodule.MInfo = info
+	servermodule.Logger = _logger
+	servermodule.status = _status
+	servermodule.closeChan = _close
+	servermodule.Ipc = _ipc
+	return servermodule
 }
 
 type Server interface {
@@ -15,7 +34,6 @@ type Server interface {
 	Start()
 	Stop()
 	Tick()
-	IsCreated() bool
 	GetModuleInfo() ServerModuleInfo
 }
 
@@ -27,34 +45,67 @@ const (
 	Released
 )
 
-//
-//func (sm *ServerModule) GetId() int {
-//	return sm.MInfo.Id
-//}
-//
-//func (sm *ServerModule) Create(info ServerModuleInfo) {
-//	sm.MInfo = info
-//	sm.logger = log.WithFields(log.Fields{"Server":info.Name})
-//	sm.logger.Info("Server Created")
-//}
-//
-//func (sm *ServerModule) Release() {
-//	sm.logger.Info("Server Released")
-//}
-//
-//func (sm *ServerModule) Start() {
-//	sm.logger.Info("Server Started")
-//
-//}
-//
-//func (sm *ServerModule) Stop() {
-//	sm.logger.Info("Server Stoped")
-//}
-//
-//func (sm *ServerModule) Tick() {
-//
-//}
-//
-//func (sm *ServerModule) GetModuleInfo() ServerModuleInfo{
-//	return ServerModuleInfo{}
-//}
+// todo - finish default interface Server's functions
+
+func (server *ServerModule) Tick() {
+	server.Logger.Info("Default Tick")
+}
+
+func (server *ServerModule) GetId() int {
+	return server.MInfo.Id
+}
+
+func (server *ServerModule) Create() {
+	server.Logger.Info("Default Server Create Called")
+	if server.status == UnCreated || server.status == Released {
+		server.status = Created
+		server.Logger.Info("Server Created")
+	}
+}
+
+func (server *ServerModule) Start() {
+	server.Logger.Info("Default Server Started Called")
+	if server.status == Running {
+		return
+	}
+	server.status = Running
+	go func(server *ServerModule) {
+		for true {
+			select {
+			case _ = <-server.closeChan:
+				return
+			default:
+				// server.Tick()
+				time.Sleep(time.Second)
+			}
+		}
+	}(server)
+	server.Logger.Info("Server Started")
+}
+
+func (server *ServerModule) Stop() {
+	server.Logger.Info("Default Server Stop Called")
+	if server.status == Stopped {
+		return
+	}
+	server.status = Stopped
+	server.closeChan <- 1
+	server.Logger.Info("Server Stopped")
+}
+
+func (server *ServerModule) Release() {
+	server.Logger.Info("Default Server Release Called")
+	if server.status == Released {
+		return
+	}
+	server.status = Released
+	server.Logger.Info("Server Released")
+}
+
+func (server *ServerModule) GetModuleInfo() ServerModuleInfo {
+	return server.MInfo
+}
+
+func (server *ServerModule) GetStatus() int {
+	return server.status
+}
