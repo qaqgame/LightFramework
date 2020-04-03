@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Gateway : struct of Gateway in Server
 type Gateway struct {
 	mapSession      map[uint32]ISession
 	conn            *net.UDPConn
@@ -25,6 +26,7 @@ type Gateway struct {
 	logger          *log.Entry
 }
 
+// NewGateway : new a Gatway via this function
 func NewGateway(_port int, _listener ISessionListener) *Gateway {
 	//log.Println("New Gateway")
 	gateway := new(Gateway)
@@ -47,6 +49,7 @@ func NewGateway(_port int, _listener ISessionListener) *Gateway {
 	return gateway
 }
 
+// Initialize : start a Gatway
 func (gateway *Gateway) Initialize() {
 	gateway.start()
 }
@@ -71,11 +74,13 @@ func (gateway *Gateway) start() {
 	go gateway.Recv()
 }
 
+// Clean : clean the Gatway's storage
 func (gateway *Gateway) Clean() {
 	gateway.mapSession = make(map[uint32]ISession)
 	gateway.Close()
 }
 
+// Close : close Gatway
 func (gateway *Gateway) Close() {
 	gateway.isRunning = false
 
@@ -87,11 +92,12 @@ func (gateway *Gateway) Close() {
 	gateway.conn = nil
 }
 
+// GetSession : get Session from Gatway
 func (gateway *Gateway) GetSession(sid uint32) ISession {
 	return gateway.mapSession[sid]
 }
 
-// 接受数据的协程
+// Recv : 接受数据的协程
 func (gateway *Gateway) Recv() {
 	gateway.logger.Info("Start Recv Goroutine of Gateway")
 	gateway.recvRunning = true
@@ -112,6 +118,7 @@ func (gateway *Gateway) Recv() {
 	gateway.recvRunning = false
 }
 
+// DoReceiveInGoroutine : recive infos form udp connection in another goroutine
 func (gateway *Gateway) DoReceiveInGoroutine() {
 	gateway.logger.Info("in function DoReceiveInGoroutine of Gateway")
 	sidBuf := make([]byte,4)
@@ -159,6 +166,7 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 	}
 }
 
+// HandSessionSender : callback function of kcp
 func (gateway *Gateway) HandSessionSender(session ISession,buf []byte, size int) {
 	//log.Println(time.Now().Unix(),"sid: ",session.GetId())
 	gateway.logger.Debug("HandSessionSender in Gateway, session's id is ",session.GetId())
@@ -181,6 +189,7 @@ func (gateway *Gateway) HandSessionSender(session ISession,buf []byte, size int)
 	gateway.logger.Debug("HandSessionSender in Gateway, End of write to UDPConn")
 }
 
+// Tick : tick Gatway
 func (gateway *Gateway) Tick() {
 	if gateway.isRunning {
 		discrepancy := uint32(time.Now().Sub(refTime) / time.Millisecond)
@@ -196,6 +205,7 @@ func (gateway *Gateway) Tick() {
 	}
 }
 
+// ClearNoActionSession : clear storage of Gatway which session is not active any more
 func (gateway *Gateway) ClearNoActionSession() {
 	for k,v := range gateway.mapSession {
 		if !v.IsActive() {
@@ -204,4 +214,12 @@ func (gateway *Gateway) ClearNoActionSession() {
 			gateway.rwMutex.Unlock()
 		}
 	}
+}
+
+// Dump : list session info
+func (gateway *Gateway) Dump() {
+	for _,v := range gateway.mapSession {
+		gateway.logger.Info("session id:",v.GetId(),"session uid: ",v.GetUid(),"is active :",v.IsActive())
+	}
+	gateway.logger.Info("num of session :",len(gateway.mapSession))
 }

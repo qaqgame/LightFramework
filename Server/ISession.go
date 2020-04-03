@@ -1,19 +1,22 @@
 package Server
 
 import (
-	log "github.com/sirupsen/logrus"
 	"net"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type sessionId struct {
 	lastId uint32
 }
 
+// ISession : reference a session between server and client
 type ISession interface {
 	GetUid() uint32
 	GetId() uint32
 	Ping() uint32
+	SetPing(ping uint32)
 	IsActive() bool
 	IsAuth() bool
 	SetAuth(userId uint32)
@@ -32,6 +35,7 @@ type ISessionListener interface {
 //var SId = &sessionId{0}
 //var refTime time.Time = time.Now()
 
+// SId : sessionid
 var SId *sessionId
 var refTime time.Time
 
@@ -45,4 +49,3 @@ func (si *sessionId) NewId() uint32 {
 	si.lastId++
 	return si.lastId
 }
-

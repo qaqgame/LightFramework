@@ -23,6 +23,7 @@ type KCPSession struct {
 	recvData       *chan []byte
 	recvDate2       *chan []byte
 	needKCPUpdate  bool
+	sessionPing    uint32
 	logger         *log.Entry
 
 	Kcp      *kcp.KCP
@@ -39,6 +40,7 @@ func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpc
 
 	kcpSession.lastActiveTime = 0
 	kcpSession.nextUpdateTime= 0
+	kcpSession.sessionPing = 0
 	kcpSession.active = false
 	c1 := make(chan []byte, 128)
 	kcpSession.recvData = &c1
@@ -87,7 +89,12 @@ func (kcpSession *KCPSession) GetId() uint32 {
 
 func (kcpSession *KCPSession) Ping() uint32 {
 
-	return 0
+	return kcpSession.sessionPing
+}
+
+func(kcpSession *KCPSession) SetPing(ping uint32) {
+	kcpSession.sessionPing = ping
+	return
 }
 
 func (kcpSession *KCPSession) IsActive() bool {

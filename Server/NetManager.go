@@ -26,7 +26,7 @@ func NewNetManager(port int,arg ...interface{}) *NetManager {
 	}
 	g := NewGateway(port, n)
 	n.Gateway = g
-	n.rpc = new(Network.RPCManager)
+	n.rpc = Network.NewRPCManager()
 	n.mapListenerHelper = make(map[uint32]*ListenerHelper)
 	n.logger.Info("NetManager Created")
 	return n
@@ -157,6 +157,7 @@ func (netManager *NetManager) InvokeBroadCast(sessions []ISession, name string, 
 }
 
 func (netManager *NetManager) Return(args ...interface{}) {
+	netManager.logger.Info("LastRpcMethodname : ",netManager.lastRPCMethod)
 	name := "On" + netManager.lastRPCMethod
 
 	rpcmsg := Network.RPCMessage{}
