@@ -147,11 +147,15 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 		//log.Println("read ",uid)
 		gateway.logger.Debug("Uid part of ProtocolHead is ", uid)
 		if uid == 0 {
-			for k,v := range gateway.mapSession {
-				if v.GetRemoteEndPoint().IP.Equal(addr.IP) && v.GetRemoteEndPoint().Port == addr.Port {
+			
+			for k, v := range gateway.mapSession {
+				if v.GetRemoteEndPoint().String() == addr.String() {
 					kcpsession = gateway.mapSession[k]
 					break
 				}
+				// if v.GetRemoteEndPoint().IP.Equal(addr.IP) && v.GetRemoteEndPoint().Port == addr.Port {
+					
+				// }
 			}
 			if kcpsession == nil {
 				gateway.logger.Debug("Uid is 0")
@@ -162,6 +166,8 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 				gateway.rwMutex.Lock()
 				gateway.mapSession[sid] = kcpsession
 				gateway.rwMutex.Unlock()
+			} else {
+				kcpsession = nil
 			}
 		} else {
 			//log.Println(gateway.recvBuf[:n])
@@ -179,7 +185,6 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 		}
 	}
 }
-
 
 // HandSessionSender : callback function of kcp
 func (gateway *Gateway) HandSessionSender(session ISession, buf []byte, size int) {

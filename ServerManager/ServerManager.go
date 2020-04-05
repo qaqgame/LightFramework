@@ -89,13 +89,13 @@ func (smr *ServerManager) RemoveAllServer() {
 
 func (smr *ServerManager) StartAServer(id int)  {
 	if v, ok := smr.ServerModules1[id]; ok {
-		v.Start()
+		v.Start(&v)
 	}
 }
 
 func (smr *ServerManager) StartAllServer1() {
 	for _,v := range smr.ServerModules1 {
-		v.Start()
+		v.Start(&v)
 	}
 }
 

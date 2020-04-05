@@ -1,19 +1,20 @@
 package ServerManager
 
 import (
+	"time"
+
 	"code.holdonbush.top/ServerFramework/IPCWork"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 type ServerModule struct {
-	MInfo        ServerModuleInfo
-	Logger       *log.Entry
+	MInfo  ServerModuleInfo
+	Logger *log.Entry
 
 	// changes
-	status       int
-	closeChan    chan int
-	Ipc          *IPCWork.IPCManager
+	status    int
+	closeChan chan int
+	Ipc       *IPCWork.IPCManager
 }
 
 func NewServerModule(info ServerModuleInfo, _logger *log.Entry, _status int, _close chan int, _ipc *IPCWork.IPCManager) *ServerModule {
@@ -31,7 +32,7 @@ type Server interface {
 	Create()
 	GetStatus() int
 	Release()
-	Start()
+	Start(servern *Server)
 	Stop()
 	Tick()
 	GetModuleInfo() ServerModuleInfo
@@ -63,23 +64,25 @@ func (server *ServerModule) Create() {
 	}
 }
 
-func (server *ServerModule) Start() {
+func (server *ServerModule) Start(servern *Server) {
 	server.Logger.Info("Default Server Started Called")
 	if server.status == Running {
 		return
 	}
 	server.status = Running
-	go func(server *ServerModule) {
+	go func(servern *Server) {
 		for true {
 			select {
 			case _ = <-server.closeChan:
 				return
 			default:
-				// server.Tick()
-				time.Sleep(time.Second)
+				// todo - tick func error
+				
+				(*servern).Tick()
+				time.Sleep(time.Millisecond)
 			}
 		}
-	}(server)
+	}(servern)
 	server.Logger.Info("Server Started")
 }
 
