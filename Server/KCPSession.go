@@ -50,7 +50,7 @@ func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpc
 	kcpSession.needKCPUpdate = false
 
 	kcpSession.Kcp = kcp.NewKCP(kcpconv, kcpSession.HandKcpSend)
-	kcpSession.Kcp.NoDelay(1,10,2,1)
+	kcpSession.Kcp.NoDelay(1,20,2,1)
 	kcpSession.Kcp.WndSize(128,128)
 	// kcpSession.Initialize()
 

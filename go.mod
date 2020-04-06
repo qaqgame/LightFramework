@@ -13,6 +13,7 @@ require (
 	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
 	golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4 // indirect
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
+	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b
 	google.golang.org/protobuf v1.20.1
 )
 

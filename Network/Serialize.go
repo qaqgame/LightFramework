@@ -31,7 +31,7 @@ func SerializeNetMsg(nm *NetMessage) []byte {
 	return buf
 }
 
-func SerializeRPCMsg(rm *RPCMessage) []byte {
+func SerializeRPCMsg(rm proto.Message) []byte {
 	out,err := proto.Marshal(rm)
 	if err != nil {
 		log.Fatal("SerializeNetMsg err: ",err)

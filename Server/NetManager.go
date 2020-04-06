@@ -1,10 +1,13 @@
 package Server
 
 import (
+	"fmt"
+	"reflect"
+	"strings"
+
 	"code.holdonbush.top/ServerFramework/Network"
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
-	"reflect"
 )
 
 type NetManager struct {
@@ -17,7 +20,7 @@ type NetManager struct {
 	logger            *log.Entry
 }
 
-func NewNetManager(port int,arg ...interface{}) *NetManager {
+func NewNetManager(port int, arg ...interface{}) *NetManager {
 	//log.Println("new NetManager")
 
 	n := new(NetManager)
@@ -54,21 +57,23 @@ func (netManager *NetManager) Tick() {
 
 func (netManager *NetManager) OnReceive(session ISession, bytes []byte, length int) {
 	//log.Println("onreceive buf lenght: ",len(bytes))
-	netManager.logger.Debug("OnReceive in NetManager, receive data len: ",len(bytes))
+	netManager.logger.Debug("OnReceive in NetManager, receive data len: ", len(bytes))
 	msg := Network.DeserializeNetMsg(bytes)
 
 	if session.IsAuth() {
 		if msg.Head.Cmd == 0 {
 			rpcmsg := Network.DeserializeRPCMsg(msg.Content)
-			netManager.HandleRPCMessage(session,rpcmsg)
+			// --------
+			fmt.Println("after des: ", len(rpcmsg.RPCRawArgs))
+			netManager.HandleRPCMessage(session, rpcmsg)
 		} else {
 			//log.Println("Use Proto Handler")
 			netManager.logger.Debug("OnReceive in NetManager, Use HandlePBMessage")
-			netManager.HandlePBMessage(session,msg)
+			netManager.HandlePBMessage(session, msg)
 		}
 	} else {
 		if msg.Head.Cmd == netManager.authCmd {
-			netManager.HandlePBMessage(session,msg)
+			netManager.HandlePBMessage(session, msg)
 		} else {
 			//log.Println("UnAuth cmd message")
 			netManager.logger.Debug("OnReceive in NetManager, UnAuth cmd message")
@@ -80,28 +85,35 @@ func (netManager *NetManager) SetAuthCmd(cmd uint32) {
 	netManager.authCmd = cmd
 }
 
-
 // RPC
 func (netManager *NetManager) HandleRPCMessage(session ISession, rpc *Network.RPCMessage) {
-	m := netManager.rpc.GetMethod(session, rpc.Name)
+	// names := strings.Split(rpc.Name,".")
+	index := strings.LastIndex(rpc.Name, ".")
+	receiver := rpc.Name[:index]
+	methodName := rpc.Name[index+1:]
+	m := netManager.rpc.GetMethod(receiver, methodName)
+	netManager.logger.Info("RPC FUNC NAME: ", m.Name)
 	if m != nil {
-		in := make([]reflect.Value, len(rpc.RPCRawArgs)+1)
-		in[0] = reflect.ValueOf(session)
+		in := make([]reflect.Value, len(rpc.RPCRawArgs)+2)
+		in[0] = netManager.rpc.GetRegisterValue(receiver)
+		in[1] = reflect.ValueOf(session)
 
 		v := rpc.GetArgs()
 		rawArgs := rpc.RPCRawArgs
-		if len(v) == (m.Type.NumIn()-1) {
+		fmt.Println("ARGS NEED: ", m.Type.NumIn(), "args have: ", len(v))
+
+		if len(v) == (m.Type.NumIn() - 2) {
 			for i := 0; i < len(rawArgs); i++ {
 				if rawArgs[i].RawValueType == Network.RPCArgType_PBObject {
-					t := m.Type.In(i+1)
+					t := m.Type.In(i + 1)
 					err := proto.Unmarshal(rawArgs[i].RawValue, t.(proto.Message))
 					if err != nil {
 						//log.Println("error handlerrpcmessage: ",err)
-						netManager.logger.Error("HandleRPCMessage in NetManager, error Unmarshal: ",err)
+						netManager.logger.Error("HandleRPCMessage in NetManager, error Unmarshal: ", err)
 					}
 					v[i] = reflect.ValueOf(t.(proto.Message))
 				}
-				in[i+1] = v[i]
+				in[i+2] = v[i]
 			}
 			// in = append(in,v...)
 			netManager.lastRPCMethod = m.Name
@@ -119,8 +131,6 @@ func (netManager *NetManager) HandleRPCMessage(session ISession, rpc *Network.RP
 	}
 }
 
-
-
 // 服务端向客户端发送
 func (netManager *NetManager) Invoke(session ISession, name string, args ...interface{}) {
 	rpcmsg := Network.RPCMessage{}
@@ -135,7 +145,7 @@ func (netManager *NetManager) Invoke(session ISession, name string, args ...inte
 	netmsg.Content = buf
 
 	sendv := Network.SerializeNetMsg(&netmsg)
-	session.Send(sendv,len(sendv))
+	session.Send(sendv, len(sendv))
 }
 
 func (netManager *NetManager) InvokeBroadCast(sessions []ISession, name string, args ...interface{}) {
@@ -151,20 +161,28 @@ func (netManager *NetManager) InvokeBroadCast(sessions []ISession, name string, 
 	netmsg.Content = buf
 
 	sendv := Network.SerializeNetMsg(&netmsg)
-	for _,v := range sessions {
-		v.Send(sendv,len(sendv))
+	for _, v := range sessions {
+		v.Send(sendv, len(sendv))
 	}
 }
 
 func (netManager *NetManager) Return(args ...interface{}) {
-	netManager.logger.Info("LastRpcMethodname : ",netManager.lastRPCMethod)
+	netManager.logger.Info("Return - LastRpcMethodname : ", netManager.lastRPCMethod)
 	name := "On" + netManager.lastRPCMethod
 
-	rpcmsg := Network.RPCMessage{}
+	// rpcmsg := Network.RPCMessage{}
+	rpcmsg := new(Network.RPCMessage)
 	rpcmsg.Name = name
-	rpcmsg.SetArgs(args)
+	//netManager.logger.Info("type: ",reflect.ValueOf(args[0]), reflect.TypeOf(args[0]))
 
-	buf := Network.SerializeRPCMsg(&rpcmsg)
+	argsn := make([]interface{}, len(args))
+	for i := 0; i < len(args); i++ {
+		argsn[i] = args[i]
+	}
+
+	rpcmsg.SetArgs(argsn)
+
+	buf := Network.SerializeRPCMsg(rpcmsg)
 
 	netmsg := Network.NetMessage{}
 	netmsg.Head = &Network.ProtocolHead{}
@@ -172,15 +190,39 @@ func (netManager *NetManager) Return(args ...interface{}) {
 	netmsg.Content = buf
 
 	sendv := Network.SerializeNetMsg(&netmsg)
-	netManager.lastRPCISession.Send(sendv,len(sendv))
+	netManager.lastRPCISession.Send(sendv, len(sendv))
 }
 
-func (netManager *NetManager) RegisterRPCListener(listener interface{}) {
-	netManager.rpc.RegisterObj(listener)
+func (netManager *NetManager) ReturnError(args ...interface{}) {
+	netManager.logger.Info("ReturnError - LastRpcMethodname : ", netManager.lastRPCMethod)
+	name := "On" + netManager.lastRPCMethod + "Error"
+
+	// rpcmsg := Network.RPCMessage{}
+	rpcmsg := new(Network.RPCMessage)
+	rpcmsg.Name = name
+	rpcmsg.SetArgs(args)
+
+	buf := Network.SerializeRPCMsg(rpcmsg)
+
+	netmsg := Network.NetMessage{}
+	netmsg.Head = &Network.ProtocolHead{}
+	netmsg.Head.DataSize = uint32(len(buf))
+	netmsg.Content = buf
+
+	sendv := Network.SerializeNetMsg(&netmsg)
+	netManager.lastRPCISession.Send(sendv, len(sendv))
 }
 
-func (netManager *NetManager) RegisterRPCMethod(listener interface{}, name string) {
-	netManager.rpc.RegisterMethod(listener,name)
+func (netManager *NetManager) RegisterRPCListener(listener interface{}, structtype reflect.Value) {
+	netManager.rpc.RegisterObj(listener, structtype)
+}
+
+func (netManager *NetManager) RegisterRPCMethod(listener interface{}, structtype reflect.Value, name string) {
+	netManager.rpc.RegisterMethod(listener, name, structtype)
+}
+
+func (NetManager *NetManager) RegisterRPCMethods(listener interface{}, structtype reflect.Value, names ...string) {
+	NetManager.rpc.RegisterMethods(listener, structtype, names...)
 }
 
 func (netManager *NetManager) UnRegisterRPCListener(listener interface{}) {
@@ -188,8 +230,8 @@ func (netManager *NetManager) UnRegisterRPCListener(listener interface{}) {
 }
 
 type ListenerHelper struct {
-	TMsg        proto.Message
-	onMsg       OnMsg
+	TMsg  proto.Message
+	onMsg OnMsg
 }
 
 type OnMsg func(session ISession, index uint32, tmsg proto.Message)
@@ -200,11 +242,11 @@ func (netManager *NetManager) HandlePBMessage(session ISession, pb *Network.NetM
 	if helper != nil {
 		obj := helper.TMsg
 		//fmt.Println("HandlePBMessge: ",helper.TMsg,obj,obj.(proto.Message),reflect.TypeOf(obj),reflect.TypeOf(obj.(proto.Message)))
-		netManager.logger.Debug("HandlePBMessage in NetManager, TMsg type is",obj)
+		netManager.logger.Debug("HandlePBMessage in NetManager, TMsg type is", obj)
 		err := proto.Unmarshal(pb.Content, obj)
 		if err != nil {
 			//log.Println("unmarshal content error: ",err)
-			netManager.logger.Warn("HandlePBMessage in NetManager, Unmarshal content error:",err)
+			netManager.logger.Warn("HandlePBMessage in NetManager, Unmarshal content error:", err)
 		}
 		//fmt.Println("unmarshaled: ",obj)
 		netManager.logger.Debug("HandlePBMessage in NetManager, Unmarshal result:", obj)
@@ -225,12 +267,12 @@ func (netManager *NetManager) Send(session ISession, index, cmd uint32, msg prot
 	netmsg.Head.Index = index
 	netmsg.Head.Cmd = cmd
 	netmsg.Head.UId = session.GetUid()
-	netmsg.Content,_ = proto.Marshal(msg)
+	netmsg.Content, _ = proto.Marshal(msg)
 	netmsg.Head.DataSize = uint32(len(netmsg.Content))
 
 	buf := Network.SerializeNetMsg(&netmsg)
 
-	session.Send(buf,len(buf))
+	session.Send(buf, len(buf))
 }
 
 func (netManager *NetManager) AddListener(cmd uint32, onmsg OnMsg, tmsg proto.Message) {

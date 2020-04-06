@@ -3,22 +3,34 @@ package Network
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"reflect"
 	"strconv"
+
+	"github.com/golang/protobuf/proto"
 )
 
 func (rm *RPCMessage) GetArgs() []reflect.Value {
+	// -----
+	fmt.Println("in get args :", len(rm.RPCRawArgs))
 	args := make([]reflect.Value, len(rm.RPCRawArgs))
 	for i := 0; i < len(rm.RPCRawArgs); i++ {
-		args = append(args, rm.RPCRawArgs[i].Value())
+		args[i] = rm.RPCRawArgs[i].Value()
 	}
 	return args
 }
 
-func (rm *RPCMessage) SetArgs(args ...interface{}) {
+func (rm *RPCMessage) SetArgs(args []interface{}) {
 	for i := 0; i < len(args); i++ {
 		rawArg := RPCRawArg{}
+		fmt.Println("type is ", reflect.ValueOf(args[i]), reflect.TypeOf(args[i]))
+		_, ok := args[i].(proto.Message)
+		if ok {
+			fmt.Println("success assert")
+		} else {
+			fmt.Println("failed assert")
+		}
 		rawArg.SetValue(args[i])
 		rm.RPCRawArgs = append(rm.RPCRawArgs, &rawArg)
 	}
@@ -51,11 +63,12 @@ func (rra *RPCRawArg) Value() reflect.Value {
 }
 
 func (rra *RPCRawArg) SetValue(v interface{}) {
+	fmt.Println("setvalue type is: ", reflect.TypeOf(reflect.ValueOf(v)))
 	switch v.(type) {
 	case int32:
 		rra.RawValueType = RPCArgType_INT
 		bytesBuffer := bytes.NewBuffer([]byte{})
-		_ = binary.Read(bytesBuffer,binary.BigEndian,v.(int))
+		_ = binary.Read(bytesBuffer, binary.BigEndian, v.(int))
 		rra.RawValue = bytesBuffer.Bytes()
 	case string:
 		rra.RawValueType = RPCArgType_String
@@ -75,8 +88,9 @@ func (rra *RPCRawArg) SetValue(v interface{}) {
 	case []byte:
 		rra.RawValueType = RPCArgType_Bytes
 		rra.RawValue = v.([]byte)
-	case *RPCMessage:
+	case proto.Message:
+		fmt.Println("proto.message")
 		rra.RawValueType = RPCArgType_PBObject
-		rra.RawValue = SerializeRPCMsg(v.(*RPCMessage))
+		rra.RawValue = SerializeRPCMsg(v.(proto.Message))
 	}
 }

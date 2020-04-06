@@ -7,8 +7,8 @@ message RPCMessage {
 }
 
 message RPCRawArg {
-    bytes RawValue = 1;
-    RPCArgType RawValueType = 2;
+    RPCArgType RawValueType = 1;
+    bytes RawValue = 2;
 }
 
 enum RPCArgType {
@@ -24,6 +24,6 @@ enum RPCArgType {
     String = 9;
     Byte = 10;
     Bool = 11;
-    Bytes = 12;
-    PBObject = 13;
+    Bytes = 31;
+    PBObject = 32;
 }
