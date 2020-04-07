@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"strconv"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 )
 
 func (rm *RPCMessage) GetArgs() []reflect.Value {
@@ -56,7 +56,14 @@ func (rra *RPCRawArg) Value() reflect.Value {
 	case RPCArgType_Bytes, RPCArgType_PBObject:
 		return reflect.ValueOf(rra.RawValue)
 	case RPCArgType_Bool:
-		b, _ := strconv.ParseBool(string(rra.RawValue))
+		if len(rra.RawValue) != 1 {
+			logrus.WithFields(logrus.Fields{"Error": "Parse Bool"}).Error("len is not 1")
+		}
+		b := false
+		if rra.RawValue[0] == 1 {
+			b = true
+		}
+		fmt.Println("res: ", b)
 		return reflect.ValueOf(b)
 	}
 	return reflect.ValueOf(nil)
