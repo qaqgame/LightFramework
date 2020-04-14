@@ -91,9 +91,9 @@ func (gateway *Gateway) Clean() {
 func (gateway *Gateway) Close() {
 	gateway.isRunning = false
 
-	if gateway.recvRunning {
-		gateway.closeSignal <- -1
-	}
+	// if gateway.recvRunning {
+	// 	gateway.closeSignal <- -1
+	// }
 
 	_ = gateway.conn.Close()
 	gateway.conn = nil
@@ -111,11 +111,11 @@ func (gateway *Gateway) Recv() {
 
 	for gateway.isRunning {
 		select {
-		case v := <-gateway.closeSignal:
-			if v == -1 {
-				gateway.recvRunning = false
-				return
-			}
+		// case v := <-gateway.closeSignal:
+		// 	if v == -1 {
+		// 		gateway.recvRunning = false
+		// 		return
+		// 	}
 		default:
 			// todo
 			gateway.DoReceiveInGoroutine()

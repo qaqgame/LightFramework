@@ -1,0 +1,47 @@
+syntax = "proto3";
+package fsplite;
+option go_package = ".;fsplite";
+
+message FSPParam {
+    string host = 1;
+    int32 port = 2;
+    uint32 sid = 3;
+    int32 serverFrameInterval = 4;
+    int32 serverTimeout = 5;
+    // clientFrameRateMultiple - rate between client and server frames
+    int32 clientFrameRateMultiple = 6;
+    int32 authID = 7;
+    bool useLocal = 8;
+    int32 maxFrameID = 9;
+    bool enableSpeedUp = 10;
+    int32 defaultSpeed = 11;
+    // jitterBufferSize - buffer size
+    int32 jitterBufferSize = 12;
+    bool enableAutoBuffer = 13;
+}
+
+// FSPMessage :
+message FSPMessage {
+    int32 playerID = 1;
+    string content = 2;
+    int32 frameID = 3;
+    int32 cmd = 4;
+    
+}
+
+// FSPDataC2S :
+message FSPDataC2S {
+    uint32 sid = 1;
+    repeated FSPMessage msgs = 2;
+}
+
+// FSPDataS2C :
+message FSPDataS2C {
+    repeated FSPFrame frames = 1;
+}
+
+// FSPFrame :
+message FSPFrame {
+    int32 frameID = 1;
+    repeated FSPMessage msgs = 2;
+}

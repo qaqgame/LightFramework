@@ -128,7 +128,7 @@ func (kcpSession *KCPSession) Send(cnt []byte, length int) bool {
 	i := kcpSession.Kcp.Send(cnt)
 	//log.Println("KCPSession *kcpSession.Send() i: ",i)
 	kcpSession.logger.Debug("Send successfully, data len: ", i)
-	return i > 0
+	return i == 0
 }
 
 func (kcpSession *KCPSession) GetRemoteEndPoint() *net.UDPAddr {
