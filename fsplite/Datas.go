@@ -47,6 +47,11 @@ const (
 	GameExit
 )
 
+const (
+	// NormalExit :
+	NormalExit = iota + 100
+)
+
 // Empty :
 func (fspframe *FSPFrame) Empty() bool {
 	return len(fspframe.Msgs) == 0 || fspframe.Msgs == nil

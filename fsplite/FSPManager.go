@@ -93,4 +93,11 @@ func (fspmanager *FSPManager) ReleaseGame(gameid uint32) {
 	}
 }
 
-//
+// AddPlayer :
+func (fspmanager *FSPManager) AddPlayer(gameid, playerid uint32) uint32 {
+	game := fspmanager.mapGame[gameid]
+	session := fspmanager.gateway.CreateSession()
+
+	game.AddPlayer(playerid, session)
+	return session.GetSid()
+}

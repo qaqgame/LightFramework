@@ -84,3 +84,10 @@ func (queue *Queue) Contain(v interface{}) bool {
 	}
 	return false
 }
+
+// Clear : clear content
+func (queue *Queue) Clear() {
+	queue.top = nil
+	queue.rear = nil
+	queue.length = 0
+}
