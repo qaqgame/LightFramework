@@ -101,3 +101,17 @@ func (fspmanager *FSPManager) AddPlayer(gameid, playerid uint32) uint32 {
 	game.AddPlayer(playerid, session)
 	return session.GetSid()
 }
+
+// AddPlayers :
+func (fspmanager *FSPManager) AddPlayers(gameid uint32, playerids []uint32) map[uint32]uint32 {
+	game := fspmanager.mapGame[gameid]
+	sessionids := make(map[uint32]uint32)
+
+	for _, v := range playerids {
+		session := fspmanager.gateway.CreateSession()
+		game.AddPlayer(v, session)
+		sessionids[v] = session.GetSid()
+	}
+
+	return sessionids
+}

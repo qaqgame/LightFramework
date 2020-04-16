@@ -1,13 +1,15 @@
 package IPCWork
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/rpc"
-	log "github.com/sirupsen/logrus"
 	"strconv"
-	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
+
 type IPCManager struct {
 	myId       int
 	myPort     int
@@ -20,8 +22,8 @@ func NewIPCManager(id int) *IPCManager {
 	ipc := new(IPCManager)
 	ipc.myId = id
 	ipc.myPort = GetIPCInfo(ipc.myId).Port
-	fmt.Println("MYPORT",ipc.myPort)
-	ipc.logger = log.WithFields(log.Fields{"Server":"IPCManager of"+strconv.Itoa(ipc.myId)})
+	fmt.Println("MYPORT", ipc.myPort)
+	ipc.logger = log.WithFields(log.Fields{"Server": "IPCManager of" + strconv.Itoa(ipc.myId)})
 	ipc.isRunning = false
 	ipc.stopSignal = make(chan int, 2)
 
@@ -31,12 +33,12 @@ func NewIPCManager(id int) *IPCManager {
 func (ipc *IPCManager) RegisterRPC(m interface{}) {
 	rpc.Register(m)
 	rpc.HandleHTTP()
-	l,e := net.Listen("tcp",":"+strconv.Itoa(ipc.myPort))
-	ipc.logger.Info("port is",ipc.myPort)
+	l, e := net.Listen("tcp", ":"+strconv.Itoa(ipc.myPort))
+	ipc.logger.Info("port is", ipc.myPort)
 	if e != nil {
-		ipc.logger.Warn("Listen tcp error",e)
+		ipc.logger.Warn("Listen tcp error", e)
 	}
-	go http.Serve(l,nil)
+	go http.Serve(l, nil)
 }
 
 func (ipc *IPCManager) Clean() {
@@ -51,11 +53,11 @@ func (ipc *IPCManager) Stop() {
 	ipc.stopSignal <- 1
 }
 
-func (ipc *IPCManager) CallRpc(args, reply interface{},port int, rpcname string) bool {
-	c, err := rpc.DialHTTP("tcp","127.0.0.1:"+strconv.Itoa(port))
+func (ipc *IPCManager) CallRpc(args, reply interface{}, port int, rpcname string) bool {
+	c, err := rpc.DialHTTP("tcp", "127.0.0.1:"+strconv.Itoa(port))
 	defer c.Close()
 	if err != nil {
-		ipc.logger.Warn("Dial tcp error:",err)
+		ipc.logger.Warn("Dial tcp error:", err)
 	}
 
 	err = c.Call(rpcname, args, reply)
@@ -63,7 +65,19 @@ func (ipc *IPCManager) CallRpc(args, reply interface{},port int, rpcname string)
 		return true
 	}
 	if err.Error() != "unexpected EOF" {
-		ipc.logger.Warn("rpc call error:",err)
+		ipc.logger.Warn("rpc call error:", err)
 	}
 	return false
+}
+
+func (ipc *IPCManager) CallRpcAsync(args, reply interface{}, port int, rpcname string) *rpc.Call {
+	c, err := rpc.DialHTTP("tcp", "127.0.0.1:"+strconv.Itoa(port))
+	defer c.Close()
+	if err != nil {
+		ipc.logger.Warn("Dial tcp error:", err)
+	}
+
+	divCall := c.Go(rpcname, args, reply, nil)
+
+	return divCall
 }
