@@ -2,7 +2,7 @@ package fsplite
 
 import "time"
 
-// FSPManager :
+// FSPManager : fsplite manager
 type FSPManager struct {
 	gateway             *FSPGateway
 	mapGame             map[uint32]*FSPGame
@@ -11,20 +11,21 @@ type FSPManager struct {
 	useCostomEnterFrame bool // 用户自定义方式
 }
 
-// NewFSPManager :
+// NewFSPManager : create a manager
 func NewFSPManager(_port int) *FSPManager {
 	fspmanager := new(FSPManager)
 	fspmanager.mapGame = make(map[uint32]*FSPGame)
+	// gateway will automatically start after created
 	fspmanager.gateway = NewFSPGateway(_port)
-	// TODO: use default param creator
-	fspmanager.param = new(FSPParam)
+	// use default param creator to crate a new param
+	fspmanager.param = NewDefaultFspParam("0.0.0.0", _port)
 	fspmanager.lastticks = 0
 	fspmanager.useCostomEnterFrame = false
 
 	return fspmanager
 }
 
-// Clean :
+// Clean : clear data
 func (fspmanager *FSPManager) Clean() {
 	fspmanager.mapGame = make(map[uint32]*FSPGame)
 	fspmanager.gateway.Clean()
@@ -41,32 +42,38 @@ func (fspmanager *FSPManager) SetServerTimeout(_serverTimeout int32) {
 	fspmanager.param.ServerTimeout = _serverTimeout
 }
 
-// GetFrameInterval :
+// GetFrameInterval : return frame interval
 func (fspmanager *FSPManager) GetFrameInterval() int32 {
 	return fspmanager.param.ServerFrameInterval
 }
 
-// GetParam :
+// GetParam : return fspparam
 func (fspmanager *FSPManager) GetParam() *FSPParam {
 	return fspmanager.param
 }
 
-// Tick :
+// Tick : time signal
 func (fspmanager *FSPManager) Tick() {
+	// tick gateway
 	fspmanager.gateway.Tick()
 
 	nowtimenano := time.Now().UnixNano()
 	interval := nowtimenano - fspmanager.lastticks
+	// after the interval, then tick game to enterframe(update game state and send fspmsg to client)
 	if interval > int64(fspmanager.param.ServerFrameInterval*1e6) {
 		fspmanager.lastticks = nowtimenano - nowtimenano%int64(fspmanager.param.ServerFrameInterval)
 
+		// user don't support a new EnterFrame Function
 		if !fspmanager.useCostomEnterFrame {
+			// default enterframe
 			fspmanager.EnterFrame()
 		}
+
+		// TODO: user can use their own enterframe
 	}
 }
 
-// EnterFrame :
+// EnterFrame : nitify all games to EnterFrame
 func (fspmanager *FSPManager) EnterFrame() {
 	if fspmanager.gateway.IsRunning {
 		for _, v := range fspmanager.mapGame {
@@ -75,16 +82,15 @@ func (fspmanager *FSPManager) EnterFrame() {
 	}
 }
 
-// CreateGame :
+// CreateGame : create a game
 func (fspmanager *FSPManager) CreateGame(gameid uint32) *FSPGame {
-	// todo -
 	fspgame := NewFSPGame(gameid, fspmanager.param)
 
 	fspmanager.mapGame[gameid] = fspgame
 	return fspgame
 }
 
-// ReleaseGame :
+// ReleaseGame : relase a specified game
 func (fspmanager *FSPManager) ReleaseGame(gameid uint32) {
 	game := fspmanager.mapGame[gameid]
 	if game != nil {
@@ -93,7 +99,7 @@ func (fspmanager *FSPManager) ReleaseGame(gameid uint32) {
 	}
 }
 
-// AddPlayer :
+// AddPlayer : add a player to a specified game, use player's uid as param, and retrun session's sid
 func (fspmanager *FSPManager) AddPlayer(gameid, playerid uint32) uint32 {
 	game := fspmanager.mapGame[gameid]
 	session := fspmanager.gateway.CreateSession()
@@ -102,7 +108,7 @@ func (fspmanager *FSPManager) AddPlayer(gameid, playerid uint32) uint32 {
 	return session.GetSid()
 }
 
-// AddPlayers :
+// AddPlayers : add players to specified game. return a map which key is player uid and value is player session's sid
 func (fspmanager *FSPManager) AddPlayers(gameid uint32, playerids []uint32) map[uint32]uint32 {
 	game := fspmanager.mapGame[gameid]
 	sessionids := make(map[uint32]uint32)

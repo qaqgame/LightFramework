@@ -11,40 +11,45 @@ import (
 
 // FSPSession :
 type FSPSession struct {
-	sid            uint32
-	ping           uint32
-	sender         FSPSender
-	listener       FSPListener
-	remoteEndPoint *net.UDPAddr
-	isEndPointChanged bool
+	sid               uint32 // session id
+	ping              uint32
+	sender            FSPSender
+	listener          FSPListener
+	remoteEndPoint    *net.UDPAddr
+	isEndPointChanged bool // remote client notwork environment change
 
+	// KCP related
 	Kcp               *kcp.KCP
 	recvData          chan []byte
 	nextkcpupdatetime uint32
 	needkcpupdateflag bool
-	closeDoreceive    chan int
-	sendBufData       *FSPDataS2C
+
+	closeDoreceive chan int
+	sendBufData    *FSPDataS2C
 
 	lastActiveTime      int64
 	logger              *logrus.Entry
 	isActive            bool
-	ReceiveInMainActive bool
+	ReceiveInMainActive bool // a flag showing if the goroutine is running
 }
 
-// FSPSender :
+// FSPSender : deliver data to upper level, and the upper level will do the send operation.
 type FSPSender func(endpoint *net.UDPAddr, bytes []byte, lenght int)
 
-// FSPListener :
+// FSPListener : data listener
 type FSPListener func(msg *FSPDataC2S)
 
-// NewFSPSession :
+// NewFSPSession : create a fsplite session
 func NewFSPSession(_sid uint32, _sender FSPSender) *FSPSession {
 	fspsesssion := new(FSPSession)
 
 	fspsesssion.sid = _sid
 	fspsesssion.sender = _sender
 
+	// create KCP part
 	fspsesssion.Kcp = kcp.NewKCP(fspsesssion.sid, fspsesssion.HandKcpSend)
+	fspsesssion.Kcp.NoDelay(1, 20, 2, 1)
+	fspsesssion.Kcp.WndSize(128, 128)
 
 	fspsesssion.remoteEndPoint = nil
 	fspsesssion.recvData = make(chan []byte, 128)
@@ -61,48 +66,49 @@ func NewFSPSession(_sid uint32, _sender FSPSender) *FSPSession {
 	return fspsesssion
 }
 
-// GetSid :
+// GetSid : return sid
 func (fspsession *FSPSession) GetSid() uint32 {
 	return fspsession.sid
 }
 
-// GetPing :
+// GetPing : return ping
 func (fspsession *FSPSession) GetPing() uint32 {
 	return fspsession.ping
 }
 
-// HandKcpSend :
+// HandKcpSend : callback handler of Kcp
 func (fspsession *FSPSession) HandKcpSend(buffer []byte, size int) {
 	fspsession.sender(fspsession.remoteEndPoint, buffer, size)
 }
 
-// SetReceiveListener :
+// SetReceiveListener : set listener of fspsession
 func (fspsession *FSPSession) SetReceiveListener(_listener FSPListener) {
 	fspsession.listener = _listener
 }
 
-// FSPSessionInit :
+// FSPSessionInit : start a new goroutine to run handling data.
 func (fspsession *FSPSession) FSPSessionInit() {
 	go fspsession.DoReceiveInMain()
 }
 
-// Active :
+// Active : active session
 func (fspsession *FSPSession) Active(addr *net.UDPAddr) {
 	fspsession.lastActiveTime = time.Now().Unix()
 	fspsession.isActive = true
 
+	// remote client network circumstance changes
 	if fspsession.remoteEndPoint == nil || fspsession.remoteEndPoint.String() != addr.String() {
 		fspsession.isEndPointChanged = true
 		fspsession.remoteEndPoint = addr
 	}
 }
 
-// SetAuth :
+// SetAuth : set auth
 func (fspsession *FSPSession) SetAuth() {
 	fspsession.isEndPointChanged = false
 }
 
-// IsActive :
+// IsActive : return active state
 func (fspsession *FSPSession) IsActive() bool {
 	if !fspsession.isActive {
 		return false
@@ -133,21 +139,25 @@ func (fspsession *FSPSession) Send(frame *FSPFrame) bool {
 	return i == 0
 }
 
-// StopReceive :
+// StopReceive : signal of close goroutine : DoReceiveInMain
 func (fspsession *FSPSession) StopReceive() {
 	fspsession.closeDoreceive <- -1
 }
 
-// DoReceiveInGateway :
+// DoReceiveInGateway : after receive data in function DoReceiveInGateway of fsplite.gateway,
+// data will be sent to channel recvData for corresponding session
 func (fspsession *FSPSession) DoReceiveInGateway(buf []byte, size int) {
 	fspsession.recvData <- buf[:size]
 }
 
-// DoReceiveInMain :
+// DoReceiveInMain : a independent goroutine.
+// keep running as long as session created, read data from channel recvData and handle it.
 func (fspsession *FSPSession) DoReceiveInMain() {
+	// a flag to show if the goroutine is running.
 	fspsession.ReceiveInMainActive = true
 	for true {
 		select {
+		// Reading from recvdata channal.
 		case data := <-fspsession.recvData:
 			fspsession.logger.Debug("DoReceiveInMain of FSPSession received data len: ", len(data))
 			ret := fspsession.Kcp.Input(data, true, true)
@@ -166,20 +176,23 @@ func (fspsession *FSPSession) DoReceiveInMain() {
 							fspsession.logger.Warn("Can not Unmarsh as a proto message")
 							continue
 						}
+						// handle data received
 						fspsession.listener(data)
 					} else {
 						fspsession.logger.Warn("找不到接收者")
 					}
 				}
 			}
+		// channel to control the goroutine
 		case _ = <-fspsession.closeDoreceive:
+			// set to false
 			fspsession.ReceiveInMainActive = false
 			return
 		}
 	}
 }
 
-// Tick :
+// Tick : tick session, update kcp state
 func (fspsession *FSPSession) Tick(currentTime uint32) {
 	current := currentTime
 	if fspsession.needkcpupdateflag || current >= fspsession.nextkcpupdatetime {
@@ -189,7 +202,7 @@ func (fspsession *FSPSession) Tick(currentTime uint32) {
 	}
 }
 
-// Info :
+// Info : debugging using
 func (fspsession *FSPSession) Info() {
 	fspsession.logger.Info("fspsession id: ", fspsession.sid, "fspsession isactive:", fspsession.isActive)
 }

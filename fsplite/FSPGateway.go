@@ -12,36 +12,38 @@ import (
 
 // FSPGateway : FSP Gateway
 type FSPGateway struct {
-	mapSession       map[uint32]*FSPSession
-	IsRunning        bool
-	Param            *FSPParam
+	mapSession map[uint32]*FSPSession
+	IsRunning  bool
+	Param      *FSPParam
 
-	conn             *net.UDPConn
-	receiveBuffer    []byte
-	port             int
-	closeSignal      chan int
-	lastClearSeesionTime  int64
+	// udp conn related
+	conn          *net.UDPConn
+	receiveBuffer []byte
+	port          int
 
-	recvRunning      bool
-	logger           *logrus.Entry
-	rwMutex          sync.RWMutex
-}	
+	closeSignal          chan int
+	lastClearSeesionTime int64
 
-// NewSessionID :
+	recvRunning bool
+	logger      *logrus.Entry
+	rwMutex     sync.RWMutex
+}
+
+// NewSessionID : allocate a new Sid for session
 func NewSessionID() uint32 {
 	sid++
 	return sid
 }
 
-// NewFSPGateway :
+// NewFSPGateway : create a fsplite gateway
 func NewFSPGateway(_port int) *FSPGateway {
 	fspgateway := new(FSPGateway)
-	fspgateway.port = _port;
+	fspgateway.port = _port
 
 	fspgateway.mapSession = make(map[uint32]*FSPSession)
 	fspgateway.receiveBuffer = make([]byte, 4096)
 
-	fspgateway.logger = logrus.WithFields(logrus.Fields{"Process":"FSPGateway"})
+	fspgateway.logger = logrus.WithFields(logrus.Fields{"Process": "FSPGateway"})
 	fspgateway.IsRunning = false
 	fspgateway.conn = nil
 	fspgateway.closeSignal = make(chan int, 2)
@@ -53,17 +55,19 @@ func NewFSPGateway(_port int) *FSPGateway {
 	return fspgateway
 }
 
-// CreateSession :
+// CreateSession : create a fspliste session
 func (fspgateway *FSPGateway) CreateSession() *FSPSession {
 	sid := NewSessionID()
+	// conv pharse is equal to sid of fsplite session for each session
 	session := NewFSPSession(sid, fspgateway.HandleSessionSend)
+
 	fspgateway.rwMutex.Lock()
 	fspgateway.mapSession[sid] = session
 	fspgateway.rwMutex.Unlock()
 	return session
 }
 
-// ReleaseSession :
+// ReleaseSession : clear session data stored in gateway
 func (fspgateway *FSPGateway) ReleaseSession(sid uint32) {
 	session := fspgateway.mapSession[sid]
 	if session != nil {
@@ -73,12 +77,12 @@ func (fspgateway *FSPGateway) ReleaseSession(sid uint32) {
 	}
 }
 
-// HandleSessionSend :
+// HandleSessionSend : send data to remote client
 func (fspgateway *FSPGateway) HandleSessionSend(endpoint *net.UDPAddr, bytes []byte, lenght int) {
 	fspgateway.logger.Debug("HandSessionSend in FSPGateway")
 	if fspgateway.conn != nil {
-		n, err := fspgateway.conn.WriteToUDP(bytes[:lenght],endpoint)
-		fspgateway.logger.Debug("HandleSessionSend In FSPGateway, wirte len: ",n)
+		n, err := fspgateway.conn.WriteToUDP(bytes[:lenght], endpoint)
+		fspgateway.logger.Debug("HandleSessionSend In FSPGateway, wirte len: ", n)
 		if err != nil {
 			fspgateway.logger.Error("HandleSessionSend In FSPGateway, write failed")
 		}
@@ -87,8 +91,7 @@ func (fspgateway *FSPGateway) HandleSessionSend(endpoint *net.UDPAddr, bytes []b
 	}
 }
 
-
-// Clean : 
+// Clean : clear session data and close gateway.
 func (fspgateway *FSPGateway) Clean() {
 	fspgateway.rwMutex.Lock()
 	fspgateway.mapSession = make(map[uint32]*FSPSession)
@@ -101,32 +104,33 @@ func (fspgateway *FSPGateway) Start() {
 	fspgateway.logger.Debug("FSPGateway Start")
 	fspgateway.IsRunning = true
 
+	// listen specified prot
 	udpAddr, err := net.ResolveUDPAddr("udp4", "0.0.0.0"+strconv.Itoa(fspgateway.port))
 	if err != nil {
-		fspgateway.logger.Fatal("Start Gateway error(resolveUDPAddr): ",err)
+		fspgateway.logger.Fatal("Start Gateway error(resolveUDPAddr): ", err)
 	}
-
-	fspgateway.conn, err = net.ListenUDP("udp4",udpAddr)
+	fspgateway.conn, err = net.ListenUDP("udp4", udpAddr)
 	if err != nil {
-		fspgateway.logger.Fatal("Start gateway err(listenUDP): ",err)
+		fspgateway.logger.Fatal("Start gateway err(listenUDP): ", err)
 	}
-
 	fspgateway.logger.Info("Listen UDP: ", fspgateway.port, udpAddr)
 
-	for _,v := range fspgateway.mapSession {
+	// make sure all goroutine is running
+	for _, v := range fspgateway.mapSession {
 		if !v.ReceiveInMainActive {
 			v.FSPSessionInit()
 		}
 	}
 
+	// do receive data from remote client in gateway in another goroutine
 	go fspgateway.Recv()
 }
 
-// Close :
+// Close : close gatewawy
 func (fspgateway *FSPGateway) Close() {
 	fspgateway.IsRunning = false
 
-	for _,v := range fspgateway.mapSession {
+	for _, v := range fspgateway.mapSession {
 		if v.ReceiveInMainActive {
 			v.StopReceive()
 		}
@@ -140,12 +144,12 @@ func (fspgateway *FSPGateway) Close() {
 	fspgateway.conn = nil
 }
 
-
 // Recv : receive goroutine
 func (fspgateway *FSPGateway) Recv() {
 	fspgateway.logger.Debug("Start Recv Goroutine Of FSPGateway")
-	fspgateway.recvRunning = true
+	fspgateway.recvRunning = true // a flag
 
+	// receive data in a loop.
 	for fspgateway.IsRunning {
 		fspgateway.DoReceiveInGoroutine()
 	}
@@ -158,18 +162,19 @@ func (fspgateway *FSPGateway) GetSession(sid uint32) *FSPSession {
 	return fspgateway.mapSession[sid]
 }
 
-// DoReceiveInGoroutine :
+// DoReceiveInGoroutine : concrete operation of receive data from client
 func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 	fspgateway.logger.Debug("In function DoReceiveGoroutine of FSPGateway")
 	sidbuf := make([]byte, 4)
 	n, addr, err := fspgateway.conn.ReadFromUDP(fspgateway.receiveBuffer)
 	if err != nil {
-		//log.Println("error DoReceiveInThread err: ",err)
 		fspgateway.logger.Error("error DoReceiveInGoroutine of FSPGateway: ", err)
 	}
-	//log.Println(time.Now().Unix(),"Received data: ", n)
 	fspgateway.logger.Debug("Received data from UDP in FSPGateway, length is ", n)
+
+	// data's lenght > 0
 	if n > 0 {
+		// use first four bits as sid
 		sidbuf = fspgateway.receiveBuffer[:4]
 
 		var session *FSPSession = nil
@@ -190,25 +195,28 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 	}
 }
 
-// Tick :
+// Tick : time signal,
+// clear unactive session and tick active session to update their kcp
 func (fspgateway *FSPGateway) Tick() {
 	if fspgateway.IsRunning {
 		discrepancy := uint32(time.Now().Sub(reftime) / time.Millisecond)
 		currentTime := time.Now().Unix()
-		if currentTime - fspgateway.lastClearSeesionTime > SessionActiveTimeout {
+		if currentTime-fspgateway.lastClearSeesionTime > SessionActiveTimeout {
 			fspgateway.lastClearSeesionTime = currentTime
+			// clear session after a specified interval
 			fspgateway.ClearNoActiveSession()
 		}
 
-		for _,v := range fspgateway.mapSession {
+		for _, v := range fspgateway.mapSession {
+			// tick each session, use time as param
 			v.Tick(discrepancy)
 		}
 	}
 }
 
-// ClearNoActiveSession :
+// ClearNoActiveSession : clear sessions which are no longer active
 func (fspgateway *FSPGateway) ClearNoActiveSession() {
-	for k,v := range fspgateway.mapSession {
+	for k, v := range fspgateway.mapSession {
 		// clear
 		if !v.IsActive() {
 			fspgateway.rwMutex.Lock()
@@ -218,7 +226,7 @@ func (fspgateway *FSPGateway) ClearNoActiveSession() {
 	}
 }
 
-// Dump : list session info
+// Dump : list session info. for debugging using
 func (fspgateway *FSPGateway) Dump() {
 	for _, v := range fspgateway.mapSession {
 		v.Info()

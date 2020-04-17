@@ -52,7 +52,7 @@ const (
 	NormalExit = iota + 100
 )
 
-// Empty :
+// Empty : judge if fspframe is empty
 func (fspframe *FSPFrame) Empty() bool {
 	return len(fspframe.Msgs) == 0 || fspframe.Msgs == nil
 }
@@ -64,9 +64,23 @@ func init() {
 	reftime = time.Now()
 }
 
-// NewDefaultFspParam :
-func NewDefaultFspParam() *FSPParam {
+// NewDefaultFspParam : Create a default FspPrame
+func NewDefaultFspParam(host string, port int) *FSPParam {
 	fspparam := new(FSPParam)
-	// TODO: default param
+	// default param
+	fspparam.Host = host
+	fspparam.Port = int32(port)
+	fspparam.Sid = 0
+	fspparam.ServerFrameInterval = ServerFrameInterval
+	fspparam.ServerTimeout = ServerTimeout
+	fspparam.ClientFrameRateMultiple = ClientFrameRateMultiple
+	fspparam.UseLocal = false
+	fspparam.AuthID = AUTH
+	fspparam.MaxFrameID = MaxFrameID
+	fspparam.EnableSpeedUp = EnableSpeedUp
+	fspparam.EnableAutoBuffer = EnableAutoBuffer
+	fspparam.DefaultSpeed = DefaultSpeedUp
+	fspparam.JitterBufferSize = JitterBufferSize
+
 	return fspparam
 }

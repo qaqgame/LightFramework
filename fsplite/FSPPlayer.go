@@ -40,7 +40,7 @@ func (fspplayer *FSPPlayer) Release() {
 	}
 }
 
-// SendToClient :
+// SendToClient : send fspframe to client
 func (fspplayer *FSPPlayer) SendToClient(frame *FSPFrame) {
 	if frame != nil {
 		// todo - frameCache store fspmesage
@@ -54,9 +54,9 @@ func (fspplayer *FSPPlayer) SendToClient(frame *FSPFrame) {
 		}
 	}
 
-	if fspplayer.session != nil {
-		fspplayer.session.Send(frame)
-	}
+	// if fspplayer.session != nil {
+	// 	fspplayer.session.Send(frame)
+	// }
 }
 
 // send
@@ -93,7 +93,7 @@ func (fspplayer *FSPPlayer) SetAuth(auth int32) {
 	fspplayer.hasAuthed = auth == fspplayer.authid
 }
 
-// HasAuthed :
+// HasAuthed : check if authed
 func (fspplayer *FSPPlayer) HasAuthed() bool {
 	return fspplayer.hasAuthed
 }
@@ -103,7 +103,7 @@ func (fspplayer *FSPPlayer) ISLose() bool {
 	return !fspplayer.session.isActive
 }
 
-// ClearRound :
+// ClearRound : clear cache
 func (fspplayer *FSPPlayer) ClearRound() {
 	fspplayer.frameCache.Clear()
 	fspplayer.lastFrameID = 0

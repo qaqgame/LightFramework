@@ -1,10 +1,11 @@
 package Server
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/xtaci/kcp-go"
 	"net"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/xtaci/kcp-go"
 )
 
 var ActiveTimeout int64 = 30
@@ -21,12 +22,12 @@ type KCPSession struct {
 	nextUpdateTime uint32
 	active         bool
 	recvData       *chan []byte
-	recvDate2       *chan []byte
+	recvDate2      *chan []byte
 	needKCPUpdate  bool
 	sessionPing    uint32
 	logger         *log.Entry
 
-	Kcp      *kcp.KCP
+	Kcp *kcp.KCP
 }
 
 func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpconv uint32, logger *log.Entry) *KCPSession {
@@ -39,7 +40,7 @@ func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpc
 	kcpSession.listener = _listener
 
 	kcpSession.lastActiveTime = 0
-	kcpSession.nextUpdateTime= 0
+	kcpSession.nextUpdateTime = 0
 	kcpSession.sessionPing = 0
 	kcpSession.active = false
 	c1 := make(chan []byte, 128)
@@ -50,15 +51,15 @@ func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpc
 	kcpSession.needKCPUpdate = false
 
 	kcpSession.Kcp = kcp.NewKCP(kcpconv, kcpSession.HandKcpSend)
-	kcpSession.Kcp.NoDelay(1,20,2,1)
-	kcpSession.Kcp.WndSize(128,128)
+	kcpSession.Kcp.NoDelay(1, 20, 2, 1)
+	kcpSession.Kcp.WndSize(128, 128)
 	// kcpSession.Initialize()
 
 	kcpSession.logger.Info("KCPSession Created")
 	return kcpSession
 }
 
-func (kcpSession *KCPSession) Initialize()  {
+func (kcpSession *KCPSession) Initialize() {
 	go kcpSession.DoReceiveInMain()
 }
 
@@ -67,7 +68,7 @@ func (kcpSession *KCPSession) SetUserId(uid uint32) {
 }
 
 func (kcpSession *KCPSession) HandKcpSend(buf []byte, size int) {
-	kcpSession.sender(kcpSession,buf,size)
+	kcpSession.sender(kcpSession, buf, size)
 }
 
 func (kcpSession *KCPSession) Active(addr *net.UDPAddr) {
@@ -92,7 +93,7 @@ func (kcpSession *KCPSession) Ping() uint32 {
 	return kcpSession.sessionPing
 }
 
-func(kcpSession *KCPSession) SetPing(ping uint32) {
+func (kcpSession *KCPSession) SetPing(ping uint32) {
 	kcpSession.sessionPing = ping
 	return
 }
@@ -139,20 +140,19 @@ func (kcpSession *KCPSession) DoReceiveInGateWay(buf []byte, size int) {
 	*kcpSession.recvData <- buf[:size]
 }
 
-
 func (kcpSession *KCPSession) DoReceiveInMain() {
 	tmp := kcpSession.recvData
 	kcpSession.recvData = kcpSession.recvDate2
 	kcpSession.recvDate2 = tmp
 	for true {
 		select {
-		case data := <- *kcpSession.recvDate2:
+		case data := <-*kcpSession.recvDate2:
 			//log.Println("KCPSession DeReceiveInMain:",len(data))
 			kcpSession.logger.Debug("DoReceiveInMain of KCPSession received data len: ", len(data))
-			ret := kcpSession.Kcp.Input(data,true,true)
+			ret := kcpSession.Kcp.Input(data, true, true)
 			if ret < 0 {
 				//log.Println("not a correct package ",ret)
-				log.Warn("DeReceiveInMain of KCPSession, data is not a correct package, input ret: ",ret)
+				log.Warn("DeReceiveInMain of KCPSession, data is not a correct package, input ret: ", ret)
 				return
 			}
 			kcpSession.needKCPUpdate = true
@@ -163,8 +163,8 @@ func (kcpSession *KCPSession) DoReceiveInMain() {
 			//		kcpSession.listener.OnReceive(kcpSession, buf, size)
 			//	}
 			//}
-			for size := kcpSession.Kcp.PeekSize(); size > 0; size = kcpSession.Kcp.PeekSize()  {
-				buf := make([]byte,size)
+			for size := kcpSession.Kcp.PeekSize(); size > 0; size = kcpSession.Kcp.PeekSize() {
+				buf := make([]byte, size)
 				if kcpSession.Kcp.Recv(buf) > 0 {
 					kcpSession.listener.OnReceive(kcpSession, buf, size)
 				}

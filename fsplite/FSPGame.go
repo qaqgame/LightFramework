@@ -31,13 +31,13 @@ type FSPGame struct {
 	logger                *logrus.Entry
 }
 
-// OnGameExit :
+// OnGameExit : handle game exit
 type OnGameExit func(uint32)
 
-// OnGameEnd :
+// OnGameEnd : handle game end
 type OnGameEnd func(int32)
 
-// NewFSPGame :
+// NewFSPGame : create a fspgame, set state as Create after finish creating
 func NewFSPGame(gameid uint32, fspparam *FSPParam) *FSPGame {
 	fspgame := new(FSPGame)
 	fspgame.gameID = gameid
@@ -55,7 +55,7 @@ func NewFSPGame(gameid uint32, fspparam *FSPParam) *FSPGame {
 	return fspgame
 }
 
-// Release :
+// Release : clear data and set state as None
 func (fspgame *FSPGame) Release() {
 	fspgame.SetGameState(None, 0, 0)
 	for _, v := range fspgame.playerList {
@@ -67,7 +67,7 @@ func (fspgame *FSPGame) Release() {
 	fspgame.onGameExit = nil
 }
 
-// AddPlayer :
+// AddPlayer : add a player to this game
 func (fspgame *FSPGame) AddPlayer(playerid uint32, session *FSPSession) *FSPPlayer {
 	if fspgame.State != Create {
 		fspgame.logger.Warn("Unable to add player, current state is :", fspgame.State)
@@ -84,26 +84,28 @@ func (fspgame *FSPGame) AddPlayer(playerid uint32, session *FSPSession) *FSPPlay
 	}
 
 	player := NewFSPPlayer(playerid, session, fspgame.param.AuthID, fspgame.OnRecvFromPlayer)
+	player.SetAuth(AUTH)
 	fspgame.playerList[playerid] = player
 	return player
 }
 
-// GetPlayer :
+// GetPlayer : return a player
 func (fspgame *FSPGame) GetPlayer(playerid uint32) *FSPPlayer {
 	return fspgame.playerList[playerid]
 }
 
-// GetPlayerMap :
+// GetPlayerMap : return map
 func (fspgame *FSPGame) GetPlayerMap() map[uint32]*FSPPlayer {
 	return fspgame.playerList
 }
 
-// OnRecvFromPlayer :
+// OnRecvFromPlayer : listener of player
 func (fspgame *FSPGame) OnRecvFromPlayer(player *FSPPlayer, msg *FSPMessage) {
+	// handle data player received from session
 	fspgame.handleClientCmd(player, msg)
 }
 
-// handleClientCmd :
+// handleClientCmd : handle data
 func (fspgame *FSPGame) handleClientCmd(player *FSPPlayer, msg *FSPMessage) {
 	playerID := player.ID
 	if !player.HasAuthed() {
@@ -144,29 +146,31 @@ func (fspgame *FSPGame) HandleGameExit(playerID uint32, msg *FSPMessage) {
 	if player != nil {
 		player.WaitForExit = true
 
+		// if we have a OnGameExit Handler, use it
 		if fspgame.onGameExit != nil {
 			fspgame.onGameExit(player.ID)
 		}
 	}
 }
 
-// AddMsgToCurrFrame :
+// AddMsgToCurrFrame : add game related msg to lockedframe
 func (fspgame *FSPGame) AddMsgToCurrFrame(playerID uint32, msg *FSPMessage) {
 	fspgame.LockedFrame.Msgs = append(fspgame.LockedFrame.Msgs, msg)
 }
 
-// AddCmdToCurrFrame :
+// AddCmdToCurrFrame : add state related operation to lockedframe
 func (fspgame *FSPGame) AddCmdToCurrFrame(cmd int32, cnt string) {
 	// TODO: update data format - notify different state info to client(eg. if need send round id to client)
 	msg := new(FSPMessage)
-	msg.PlayerID = cmd
+	msg.PlayerID = 0
 	msg.Content = cnt
-	msg.Cmd = AUTH
+	// mean for state
+	msg.Cmd = cmd
 
 	fspgame.LockedFrame.Msgs = append(fspgame.LockedFrame.Msgs, msg)
 }
 
-// SetFlag :
+// SetFlag : set flag
 func (fspgame *FSPGame) SetFlag(playerID uint32, flag *int16, flagname string) {
 	*flag |= (0x01 << (playerID - 1))
 	fspgame.logger.Debug("flag name: ", flagname, "value", *flag)
@@ -174,7 +178,7 @@ func (fspgame *FSPGame) SetFlag(playerID uint32, flag *int16, flagname string) {
 
 // EnterFrame : 驱动游戏状态
 func (fspgame *FSPGame) EnterFrame() {
-	//TODO:
+	// clear player in the exit queue
 	for _, v := range fspgame.playerExitOnNextFrame {
 		v.Release()
 	}
@@ -196,10 +200,12 @@ func (fspgame *FSPGame) EnterFrame() {
 		}
 	}
 
+	// if frameid is 0, means that msg is not game msg. then we redefine a new lockedframe
 	if fspgame.LockedFrame.FrameID == 0 {
 		fspgame.LockedFrame = new(FSPFrame)
 	}
 
+	// only when state is RoundBegin or ControlStart, can we increase CurrFrameID
 	if fspgame.State == RoundBegin || fspgame.State == ControlStart {
 		fspgame.CurrFrameID++
 		fspgame.LockedFrame = new(FSPFrame)
@@ -305,12 +311,12 @@ func (fspgame *FSPGame) OnStateGameEnd() {
 	}
 }
 
-// IsGameEnd :
+// IsGameEnd : if game is end
 func (fspgame *FSPGame) IsGameEnd() bool {
 	return fspgame.State == GameEnd
 }
 
-// SetGameState :
+// SetGameState : set game state, param1 and param2 is useless now, using 0 is ok.
 func (fspgame *FSPGame) SetGameState(gamestate, param1, param2 int) {
 	fspgame.State = gamestate
 	fspgame.stateParam1 = param1
@@ -319,7 +325,7 @@ func (fspgame *FSPGame) SetGameState(gamestate, param1, param2 int) {
 	fspgame.logger.Debug("game state now :", fspgame.State)
 }
 
-// isFlagFull :
+// isFlagFull : check if all player send corresponding msg
 func (fspgame *FSPGame) isFlagFull(flag int16) bool {
 	if len(fspgame.playerList) > 0 {
 		for _, v := range fspgame.playerList {
@@ -338,12 +344,12 @@ func (fspgame *FSPGame) CheckGameAbnormalEnd() {
 	return
 }
 
-// IncRoundID :
+// IncRoundID : increate roundid
 func (fspgame *FSPGame) IncRoundID() {
 	fspgame.CurrRoundID++
 }
 
-// ClearRound :
+// ClearRound : clear lockedframe
 func (fspgame *FSPGame) ClearRound() {
 	fspgame.LockedFrame = new(FSPFrame)
 	fspgame.CurrFrameID = 0
@@ -356,7 +362,7 @@ func (fspgame *FSPGame) ClearRound() {
 	}
 }
 
-// ResetRoundFlag :
+// ResetRoundFlag : reset flag
 func (fspgame *FSPGame) ResetRoundFlag() {
 	fspgame.roundBeginFlag = 0
 	fspgame.controlStartFlag = 0
