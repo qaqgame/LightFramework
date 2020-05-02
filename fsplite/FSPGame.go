@@ -163,7 +163,7 @@ func (fspgame *FSPGame) AddCmdToCurrFrame(cmd int32, cnt string) {
 	// TODO: update data format - notify different state info to client(eg. if need send round id to client)
 	msg := new(FSPMessage)
 	msg.PlayerID = 0
-	msg.Content = cnt
+	msg.Content = []byte(cnt)
 	// mean for state
 	msg.Cmd = cmd
 
@@ -172,7 +172,7 @@ func (fspgame *FSPGame) AddCmdToCurrFrame(cmd int32, cnt string) {
 
 // SetFlag : set flag
 func (fspgame *FSPGame) SetFlag(playerID uint32, flag *int16, flagname string) {
-	*flag |= (0x01 << (playerID - 1))
+	*flag |= 0x01 << (playerID - 1)
 	fspgame.logger.Debug("flag name: ", flagname, "value", *flag)
 }
 

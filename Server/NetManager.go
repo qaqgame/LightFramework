@@ -262,15 +262,19 @@ func (netManager *NetManager) HandlePBMessage(session ISession, pb *Network.NetM
 }
 
 func (netManager *NetManager) Send(session ISession, index, cmd uint32, msg proto.Message) {
-	netmsg := Network.NetMessage{}
-	netmsg.Head = &Network.ProtocolHead{}
+	netmsg := new(Network.NetMessage)
+	netmsg.Head = new(Network.ProtocolHead)
 	netmsg.Head.Index = index
 	netmsg.Head.Cmd = cmd
 	netmsg.Head.UId = session.GetUid()
 	netmsg.Content, _ = proto.Marshal(msg)
 	netmsg.Head.DataSize = uint32(len(netmsg.Content))
 
-	buf := Network.SerializeNetMsg(&netmsg)
+	netManager.logger.Debug("netmsg in NetManager Send: ", netmsg)
+
+	buf := Network.SerializeNetMsg(netmsg)
+
+	netManager.logger.Debug("SerializeNetMsg in NetManager Send: ", buf)
 
 	session.Send(buf, len(buf))
 }

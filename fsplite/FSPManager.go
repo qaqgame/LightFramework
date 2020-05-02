@@ -18,7 +18,7 @@ func NewFSPManager(_port int) *FSPManager {
 	// gateway will automatically start after created
 	fspmanager.gateway = NewFSPGateway(_port)
 	// use default param creator to crate a new param
-	fspmanager.param = NewDefaultFspParam("0.0.0.0", _port)
+	fspmanager.param = NewDefaultFspParam("120.79.240.163", _port)
 	fspmanager.lastticks = 0
 	fspmanager.useCostomEnterFrame = false
 

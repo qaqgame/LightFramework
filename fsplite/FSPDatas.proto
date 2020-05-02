@@ -22,11 +22,11 @@ message FSPParam {
 
 // FSPMessage :
 message FSPMessage {
-    int32 playerID = 1;
-    string content = 2;
-    int32 frameID = 3;
-    int32 cmd = 4;
-    
+    int32 cmd = 1;
+    int32 playerID = 2;
+    bytes content = 3;
+    int32 frameID = 4;
+
 }
 
 // FSPDataC2S :

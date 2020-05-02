@@ -84,3 +84,8 @@ func NewDefaultFspParam(host string, port int) *FSPParam {
 
 	return fspparam
 }
+
+// TODO: use interface
+type GameProcess interface {
+
+}

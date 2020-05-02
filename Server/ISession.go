@@ -25,6 +25,7 @@ type ISession interface {
 	Tick(currentTime uint32)
 	DoReceiveInGateWay(buf []byte, size int)
 	Active(addr *net.UDPAddr)
+	StopReceive()
 }
 
 type ISessionListener interface {

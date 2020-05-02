@@ -105,7 +105,7 @@ func (fspgateway *FSPGateway) Start() {
 	fspgateway.IsRunning = true
 
 	// listen specified prot
-	udpAddr, err := net.ResolveUDPAddr("udp4", "0.0.0.0"+strconv.Itoa(fspgateway.port))
+	udpAddr, err := net.ResolveUDPAddr("udp4", "0.0.0.0:"+strconv.Itoa(fspgateway.port))
 	if err != nil {
 		fspgateway.logger.Fatal("Start Gateway error(resolveUDPAddr): ", err)
 	}
@@ -140,7 +140,7 @@ func (fspgateway *FSPGateway) Close() {
 	// 	fspgateway.closeSignal <- -1
 	// }
 
-	fspgateway.conn.Close()
+	_ = fspgateway.conn.Close()
 	fspgateway.conn = nil
 }
 
@@ -175,7 +175,8 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 	// data's lenght > 0
 	if n > 0 {
 		// use first four bits as sid
-		sidbuf = fspgateway.receiveBuffer[:4]
+		// TODO: read here error:
+		sidbuf = fspgateway.receiveBuffer[24:28]
 
 		var session *FSPSession = nil
 		sid := binary.BigEndian.Uint32(sidbuf)

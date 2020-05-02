@@ -33,7 +33,7 @@ func NewIPCManager(id int) *IPCManager {
 func (ipc *IPCManager) RegisterRPC(m interface{}) {
 	rpc.Register(m)
 	rpc.HandleHTTP()
-	l, e := net.Listen("tcp", ":"+strconv.Itoa(ipc.myPort))
+	l, e := net.Listen("tcp4", ":"+strconv.Itoa(ipc.myPort))
 	ipc.logger.Info("port is", ipc.myPort)
 	if e != nil {
 		ipc.logger.Warn("Listen tcp error", e)
@@ -54,7 +54,7 @@ func (ipc *IPCManager) Stop() {
 }
 
 func (ipc *IPCManager) CallRpc(args, reply interface{}, port int, rpcname string) bool {
-	c, err := rpc.DialHTTP("tcp", "127.0.0.1:"+strconv.Itoa(port))
+	c, err := rpc.DialHTTP("tcp4", "127.0.0.1:"+strconv.Itoa(port))
 	defer c.Close()
 	if err != nil {
 		ipc.logger.Warn("Dial tcp error:", err)
@@ -71,7 +71,7 @@ func (ipc *IPCManager) CallRpc(args, reply interface{}, port int, rpcname string
 }
 
 func (ipc *IPCManager) CallRpcAsync(args, reply interface{}, port int, rpcname string) *rpc.Call {
-	c, err := rpc.DialHTTP("tcp", "127.0.0.1:"+strconv.Itoa(port))
+	c, err := rpc.DialHTTP("tcp4", "127.0.0.1:"+strconv.Itoa(port))
 	defer c.Close()
 	if err != nil {
 		ipc.logger.Warn("Dial tcp error:", err)

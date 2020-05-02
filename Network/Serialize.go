@@ -2,9 +2,10 @@ package Network
 
 import (
 	"encoding/binary"
-	"github.com/golang/protobuf/proto"
 	"log"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 )
 
 func SerializeNetMsg(nm *NetMessage) []byte {
@@ -12,29 +13,29 @@ func SerializeNetMsg(nm *NetMessage) []byte {
 	//if err != nil {
 	//	log.Fatal("SerializeNetMsg err: ",err)
 	//}
-	buf := make([]byte,0)
+	buf := make([]byte, 0)
 	buf2 := make([]byte, 4)
-	binary.BigEndian.PutUint32(buf2,nm.Head.UId)
-	buf= append(buf, buf2...)
-	binary.BigEndian.PutUint32(buf2,nm.Head.Cmd)
-	buf= append(buf, buf2...)
-	binary.BigEndian.PutUint32(buf2,nm.Head.Index)
-	buf= append(buf, buf2...)
-	binary.BigEndian.PutUint32(buf2,nm.Head.DataSize)
-	buf= append(buf, buf2...)
-	binary.BigEndian.PutUint32(buf2,nm.Head.CheckSum)
-	buf= append(buf, buf2...)
+	binary.BigEndian.PutUint32(buf2, nm.Head.UId)
+	buf = append(buf, buf2...)
+	binary.BigEndian.PutUint32(buf2, nm.Head.Cmd)
+	buf = append(buf, buf2...)
+	binary.BigEndian.PutUint32(buf2, nm.Head.Index)
+	buf = append(buf, buf2...)
+	binary.BigEndian.PutUint32(buf2, nm.Head.DataSize)
+	buf = append(buf, buf2...)
+	binary.BigEndian.PutUint32(buf2, nm.Head.CheckSum)
+	buf = append(buf, buf2...)
 	buf = append(buf, nm.Content...)
 
-	log.Println(time.Now().Unix(),buf)
+	log.Println(time.Now().Unix(), buf)
 
 	return buf
 }
 
 func SerializeRPCMsg(rm proto.Message) []byte {
-	out,err := proto.Marshal(rm)
+	out, err := proto.Marshal(rm)
 	if err != nil {
-		log.Fatal("SerializeNetMsg err: ",err)
+		log.Fatal("SerializeNetMsg err: ", err)
 	}
 	return out
 }
@@ -49,9 +50,9 @@ func DeserializeNetMsg(buf []byte) *NetMessage {
 	//tmp := make([]byte,len(buf))
 	//tmp = append(buf[:12],d1...)
 	//tmp = append(tmp,buf[16:]...)
-	log.Println(binary.BigEndian.Uint32(buf[:4]),int32(binary.BigEndian.Uint32(buf[12:16])))
-	nm := &NetMessage{}
-	nm.Head = &ProtocolHead{}
+	log.Println(binary.BigEndian.Uint32(buf[:4]), int32(binary.BigEndian.Uint32(buf[12:16])))
+	nm := new(NetMessage)
+	nm.Head = new(ProtocolHead)
 	//if err := proto.Unmarshal(buf, nm); err != nil {
 	//	log.Fatal("DeserializeNetMsg err: ",err)
 	//}
@@ -68,7 +69,7 @@ func DeserializeNetMsg(buf []byte) *NetMessage {
 func DeserializeRPCMsg(buf []byte) *RPCMessage {
 	rm := &RPCMessage{}
 	if err := proto.Unmarshal(buf, rm); err != nil {
-		log.Fatal("DeserializeNetMsg err: ",err)
+		log.Fatal("DeserializeNetMsg err: ", err)
 	}
 	return rm
 }

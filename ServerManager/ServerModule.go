@@ -8,7 +8,7 @@ import (
 )
 
 type ServerModule struct {
-	MInfo  ServerModuleInfo
+	MInfo  *ServerModuleInfo
 	Logger *log.Entry
 
 	// changes
@@ -17,7 +17,7 @@ type ServerModule struct {
 	Ipc       *IPCWork.IPCManager
 }
 
-func NewServerModule(info ServerModuleInfo, _logger *log.Entry, _status int, _close chan int, _ipc *IPCWork.IPCManager) *ServerModule {
+func NewServerModule(info *ServerModuleInfo, _logger *log.Entry, _status int, _close chan int, _ipc *IPCWork.IPCManager) *ServerModule {
 	servermodule := new(ServerModule)
 	servermodule.MInfo = info
 	servermodule.Logger = _logger
@@ -32,10 +32,10 @@ type Server interface {
 	Create()
 	GetStatus() int
 	Release()
-	Start(servern *Server)
+	Start(servern Server)
 	Stop()
 	Tick()
-	GetModuleInfo() ServerModuleInfo
+	GetModuleInfo() *ServerModuleInfo
 }
 
 const (
@@ -64,21 +64,22 @@ func (server *ServerModule) Create() {
 	}
 }
 
-func (server *ServerModule) Start(servern *Server) {
+func (server *ServerModule) Start(servern Server) {
+	server.Logger.Debug("Start Server ID:", servern.GetId())
 	server.Logger.Info("Default Server Started Called")
 	if server.status == Running {
 		return
 	}
 	server.status = Running
-	go func(servern *Server) {
+	go func(servern Server) {
 		for true {
 			select {
 			case _ = <-server.closeChan:
 				return
 			default:
 				// todo - tick func error
-				
-				(*servern).Tick()
+
+				servern.Tick()
 				time.Sleep(time.Millisecond)
 			}
 		}
@@ -105,7 +106,7 @@ func (server *ServerModule) Release() {
 	server.Logger.Info("Server Released")
 }
 
-func (server *ServerModule) GetModuleInfo() ServerModuleInfo {
+func (server *ServerModule) GetModuleInfo() *ServerModuleInfo {
 	return server.MInfo
 }
 

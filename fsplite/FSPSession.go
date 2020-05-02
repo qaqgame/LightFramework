@@ -41,13 +41,14 @@ type FSPListener func(msg *FSPDataC2S)
 
 // NewFSPSession : create a fsplite session
 func NewFSPSession(_sid uint32, _sender FSPSender) *FSPSession {
+
 	fspsesssion := new(FSPSession)
 
 	fspsesssion.sid = _sid
 	fspsesssion.sender = _sender
 
 	// create KCP part
-	fspsesssion.Kcp = kcp.NewKCP(fspsesssion.sid, fspsesssion.HandKcpSend)
+	fspsesssion.Kcp = kcp.NewKCP(2, fspsesssion.HandKcpSend)
 	fspsesssion.Kcp.NoDelay(1, 20, 2, 1)
 	fspsesssion.Kcp.WndSize(128, 128)
 
@@ -63,6 +64,7 @@ func NewFSPSession(_sid uint32, _sender FSPSender) *FSPSession {
 	fspsesssion.sendBufData = new(FSPDataS2C)
 
 	fspsesssion.FSPSessionInit()
+	fspsesssion.logger.Debug("New FSPSession")
 	return fspsesssion
 }
 

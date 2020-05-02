@@ -7,9 +7,9 @@ message NetMessage {
 }
 
 message ProtocolHead {
-    fixed32 UId = 1;
-    fixed32 Cmd = 2;
-    fixed32 Index = 3;
-    fixed32 DataSize = 4;
-    fixed32 CheckSum = 5;
+    uint32 UId = 1;
+    uint32 Cmd = 2;
+    uint32 Index = 3;
+    uint32 DataSize = 4;
+    uint32 CheckSum = 5;
 }
