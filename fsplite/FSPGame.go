@@ -84,7 +84,7 @@ func (fspgame *FSPGame) AddPlayer(playerid uint32, session *FSPSession) *FSPPlay
 	}
 
 	player := NewFSPPlayer(playerid, session, fspgame.param.AuthID, fspgame.OnRecvFromPlayer)
-	player.SetAuth(AUTH)
+	// player.SetAuth(AUTH)
 	fspgame.playerList[playerid] = player
 	return player
 }
@@ -108,32 +108,39 @@ func (fspgame *FSPGame) OnRecvFromPlayer(player *FSPPlayer, msg *FSPMessage) {
 // handleClientCmd : handle data
 func (fspgame *FSPGame) handleClientCmd(player *FSPPlayer, msg *FSPMessage) {
 	playerID := player.ID
+	fspgame.logger.Warn("before player id", player.ID, "authed: ", player.hasAuthed)
+	fspgame.logger.Debug("not authed")
+	if msg.Cmd == AUTH {
+		fspgame.logger.Debug("auth")
+		player.SetAuth(AUTH)
+		fspgame.logger.Warn("player id", player.ID, "authed: ", player.hasAuthed)
+	}
+
 	if !player.HasAuthed() {
-		if msg.Cmd == AUTH {
-			player.SetAuth(msg.Cmd)
-		}
 		return
 	}
+
+	fspgame.logger.Warn("Cmd is: ", msg.Cmd)
 
 	switch msg.Cmd {
 	case GameBegin:
 		fspgame.SetFlag(playerID, &fspgame.gameBeginFlag, "gamebeginflag")
-		fspgame.logger.Debug("gamebeginflag value: ", fspgame.gameBeginFlag)
+		fspgame.logger.Info("gamebeginflag value: ", fspgame.gameBeginFlag)
 	case RoundBegin:
 		fspgame.SetFlag(playerID, &fspgame.roundBeginFlag, "roundbeginflag")
-		fspgame.logger.Debug("roundbeginflag value: ", fspgame.roundBeginFlag)
+		fspgame.logger.Info("roundbeginflag value: ", fspgame.roundBeginFlag)
 	case ControlStart:
 		fspgame.SetFlag(playerID, &fspgame.controlStartFlag, "controlstartflag")
-		fspgame.logger.Debug("controlstartflag value: ", fspgame.controlStartFlag)
+		fspgame.logger.Info("controlstartflag value: ", fspgame.controlStartFlag)
 	case RoundEnd:
 		fspgame.SetFlag(playerID, &fspgame.gameEndFlag, "gameendflag")
-		fspgame.logger.Debug("roundendflag value: ", fspgame.gameEndFlag)
+		fspgame.logger.Info("roundendflag value: ", fspgame.gameEndFlag)
 	case GameEnd:
 		fspgame.SetFlag(playerID, &fspgame.gameEndFlag, "gameendflag")
-		fspgame.logger.Debug("gameendflag value: ", fspgame.gameEndFlag)
+		fspgame.logger.Info("gameendflag value: ", fspgame.gameEndFlag)
 	case GameExit:
 		fspgame.HandleGameExit(playerID, msg)
-		fspgame.logger.Debug("receive gameexit cmd from player id :", playerID)
+		fspgame.logger.Info("receive gameexit cmd from player id :", playerID)
 	default:
 		fspgame.AddMsgToCurrFrame(playerID, msg)
 	}

@@ -1,5 +1,7 @@
 package fsplite
 
+import "github.com/sirupsen/logrus"
+
 // FSPPlayer :
 type FSPPlayer struct {
 	ID           uint32
@@ -79,6 +81,7 @@ func (fspplayer *FSPPlayer) sendinterval(frame *FSPFrame) bool {
 func (fspplayer *FSPPlayer) OnRecvFromSession(message *FSPDataC2S) {
 	if fspplayer.session.isEndPointChanged {
 		fspplayer.hasAuthed = false
+		fspplayer.session.isEndPointChanged = false
 	}
 	if fspplayer.recvListener != nil {
 		for _, v := range message.Msgs {
@@ -90,7 +93,9 @@ func (fspplayer *FSPPlayer) OnRecvFromSession(message *FSPDataC2S) {
 // SetAuth :
 func (fspplayer *FSPPlayer) SetAuth(auth int32) {
 	// todo - 真正的鉴权
+	logrus.Warn("player authid is: ", fspplayer.authid, "auth is: ",auth)
 	fspplayer.hasAuthed = auth == fspplayer.authid
+	logrus.Warn("hasauthed: ",fspplayer.hasAuthed)
 }
 
 // HasAuthed : check if authed

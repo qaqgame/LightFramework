@@ -1,7 +1,7 @@
 package fsplite
 
 import (
-	"encoding/binary"
+	"github.com/golang/protobuf/proto"
 	"net"
 	"strconv"
 	"sync"
@@ -79,10 +79,10 @@ func (fspgateway *FSPGateway) ReleaseSession(sid uint32) {
 
 // HandleSessionSend : send data to remote client
 func (fspgateway *FSPGateway) HandleSessionSend(endpoint *net.UDPAddr, bytes []byte, lenght int) {
-	fspgateway.logger.Debug("HandSessionSend in FSPGateway")
+	// fspgateway.logger.Debug("HandSessionSend in FSPGateway")
 	if fspgateway.conn != nil {
-		n, err := fspgateway.conn.WriteToUDP(bytes[:lenght], endpoint)
-		fspgateway.logger.Debug("HandleSessionSend In FSPGateway, wirte len: ", n)
+		_, err := fspgateway.conn.WriteToUDP(bytes[:lenght], endpoint)
+		// fspgateway.logger.Debug("HandleSessionSend In FSPGateway, wirte len: ", n)
 		if err != nil {
 			fspgateway.logger.Error("HandleSessionSend In FSPGateway, write failed")
 		}
@@ -164,25 +164,47 @@ func (fspgateway *FSPGateway) GetSession(sid uint32) *FSPSession {
 
 // DoReceiveInGoroutine : concrete operation of receive data from client
 func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
-	fspgateway.logger.Debug("In function DoReceiveGoroutine of FSPGateway")
-	sidbuf := make([]byte, 4)
+	// fspgateway.logger.Debug("In function DoReceiveGoroutine of FSPGateway")
+	// sidbuf := make([]byte, 4)
 	n, addr, err := fspgateway.conn.ReadFromUDP(fspgateway.receiveBuffer)
 	if err != nil {
 		fspgateway.logger.Error("error DoReceiveInGoroutine of FSPGateway: ", err)
 	}
-	fspgateway.logger.Debug("Received data from UDP in FSPGateway, length is ", n)
-
+	// fspgateway.logger.Debug("Received data from UDP in FSPGateway, length is ", n)
 	// data's lenght > 0
+
+	if n <= 24 {
+		return
+	}
+
 	if n > 0 {
 		// use first four bits as sid
 		// TODO: read here error:
-		sidbuf = fspgateway.receiveBuffer[24:28]
+		// sidbuf = fspgateway.receiveBuffer[24:28]
+		tmp := fspgateway.receiveBuffer[24:n]
+		// fspgateway.logger.Warn("Datas from conn: ", fspgateway.receiveBuffer[:n])
 
+		fspmsg := new(FSPDataC2S)
+		fspmsg.Msgs = make([]*FSPMessage,0)
+		err := proto.Unmarshal(tmp, fspmsg)
+		if err != nil {
+			// fspgateway.logger.Error("Unmarshal msg error: ",err)
+			// return
+		}
+		// fspgateway.logger.Info("all: ", fspgateway.receiveBuffer[:n])
+		// fspgateway.logger.Info("tmp: ", tmp, "len: ", len(tmp))
+		if fspmsg.String() != "" {
+			fspgateway.logger.Warn("fspmsg: ",fspmsg)
+		}
 		var session *FSPSession = nil
-		sid := binary.BigEndian.Uint32(sidbuf)
+		// tmp1 := binary.LittleEndian.Uint32(sidbuf)
+		// fspgateway.logger.Warn("LittleEndian res: ", tmp1)
+		sid := fspmsg.Sid
 		if sid == 0 {
-			fspgateway.logger.Info("Sid 为0，丢弃该包")
+			// fspgateway.logger.Warn("Sid 为0，丢弃该包")
+			return
 		} else {
+			fspgateway.logger.Warn("Sid 为 : ", sid)
 			session = fspgateway.GetSession(sid)
 		}
 

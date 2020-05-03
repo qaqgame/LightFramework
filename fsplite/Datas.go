@@ -14,7 +14,7 @@ const (
 	// MaxFrameID :
 	MaxFrameID = -1
 	// AUTH :
-	AUTH = 10
+	AUTH = 1008
 	// EnableSpeedUp :
 	EnableSpeedUp = true
 	// DefaultSpeedUp :
@@ -88,4 +88,18 @@ func NewDefaultFspParam(host string, port int) *FSPParam {
 // TODO: use interface
 type GameProcess interface {
 
+}
+
+type FSPGameI interface {
+	OnStateGameCreate()
+	OnStateGameBegin()
+	OnStateRoundBegin()
+	OnStateControlStart()
+	OnStateRoundEnd()
+	OnStateGameEnd()
+	IsGameEnd()
+	SetGameState()
+	EnterFrame()
+	AddCmdToCurrFrame(int32, string)
+	AddMsgToCurrFrame(uint32, b*FSPMessage)
 }
