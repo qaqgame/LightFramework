@@ -243,6 +243,8 @@ func (fspgateway *FSPGateway) ClearNoActiveSession() {
 		// clear
 		if !v.IsActive() {
 			fspgateway.rwMutex.Lock()
+			fspgateway.logger.Fatal("session not active: ", v.sid)
+			panic(v.sid)
 			delete(fspgateway.mapSession, k)
 			fspgateway.rwMutex.Unlock()
 		}

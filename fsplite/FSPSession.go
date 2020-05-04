@@ -126,7 +126,7 @@ func (fspsession *FSPSession) IsActive() bool {
 // Send : send data
 func (fspsession *FSPSession) Send(frame *FSPFrame) bool {
 	if !fspsession.IsActive() {
-		fspsession.logger.Warn("FSPSession is not active")
+		// fspsession.logger.Warn("FSPSession is not active", fspsession.sid)
 		return false
 	}
 	fspsession.sendBufData.Frames = make([]*FSPFrame, 0)

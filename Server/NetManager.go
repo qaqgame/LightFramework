@@ -133,34 +133,34 @@ func (netManager *NetManager) HandleRPCMessage(session ISession, rpc *Network.RP
 
 // 服务端向客户端发送
 func (netManager *NetManager) Invoke(session ISession, name string, args ...interface{}) {
-	rpcmsg := Network.RPCMessage{}
+	rpcmsg := new(Network.RPCMessage)
 	rpcmsg.Name = name
 	rpcmsg.SetArgs(args)
 
-	buf := Network.SerializeRPCMsg(&rpcmsg)
+	buf := Network.SerializeRPCMsg(rpcmsg)
 
-	netmsg := Network.NetMessage{}
-	netmsg.Head = &Network.ProtocolHead{}
+	netmsg := new(Network.NetMessage)
+	netmsg.Head = new(Network.ProtocolHead)
 	netmsg.Head.DataSize = uint32(len(buf))
 	netmsg.Content = buf
 
-	sendv := Network.SerializeNetMsg(&netmsg)
+	sendv := Network.SerializeNetMsg(netmsg)
 	session.Send(sendv, len(sendv))
 }
 
 func (netManager *NetManager) InvokeBroadCast(sessions []ISession, name string, args ...interface{}) {
-	rpcmsg := Network.RPCMessage{}
+	rpcmsg := new(Network.RPCMessage)
 	rpcmsg.Name = name
 	rpcmsg.SetArgs(args)
 
-	buf := Network.SerializeRPCMsg(&rpcmsg)
+	buf := Network.SerializeRPCMsg(rpcmsg)
 
-	netmsg := Network.NetMessage{}
-	netmsg.Head = &Network.ProtocolHead{}
+	netmsg := new(Network.NetMessage)
+	netmsg.Head = new(Network.ProtocolHead)
 	netmsg.Head.DataSize = uint32(len(buf))
 	netmsg.Content = buf
 
-	sendv := Network.SerializeNetMsg(&netmsg)
+	sendv := Network.SerializeNetMsg(netmsg)
 	for _, v := range sessions {
 		v.Send(sendv, len(sendv))
 	}
@@ -270,11 +270,11 @@ func (netManager *NetManager) Send(session ISession, index, cmd uint32, msg prot
 	netmsg.Content, _ = proto.Marshal(msg)
 	netmsg.Head.DataSize = uint32(len(netmsg.Content))
 
-	netManager.logger.Debug("netmsg in NetManager Send: ", netmsg)
+	// netManager.logger.Debug("netmsg in NetManager Send: ", netmsg)
 
 	buf := Network.SerializeNetMsg(netmsg)
 
-	netManager.logger.Debug("SerializeNetMsg in NetManager Send: ", buf)
+	// netManager.logger.Debug("SerializeNetMsg in NetManager Send: ", buf)
 
 	session.Send(buf, len(buf))
 }

@@ -23,7 +23,7 @@ func (rm *RPCMessage) GetArgs() []reflect.Value {
 
 func (rm *RPCMessage) SetArgs(args []interface{}) {
 	for i := 0; i < len(args); i++ {
-		rawArg := RPCRawArg{}
+		rawArg := new(RPCRawArg)
 		fmt.Println("type is ", reflect.ValueOf(args[i]), reflect.TypeOf(args[i]))
 		_, ok := args[i].(proto.Message)
 		if ok {
@@ -32,7 +32,7 @@ func (rm *RPCMessage) SetArgs(args []interface{}) {
 			fmt.Println("failed assert")
 		}
 		rawArg.SetValue(args[i])
-		rm.RPCRawArgs = append(rm.RPCRawArgs, &rawArg)
+		rm.RPCRawArgs = append(rm.RPCRawArgs, rawArg)
 	}
 }
 
@@ -72,6 +72,18 @@ func (rra *RPCRawArg) Value() reflect.Value {
 func (rra *RPCRawArg) SetValue(v interface{}) {
 	fmt.Println("setvalue type is: ", reflect.TypeOf(reflect.ValueOf(v)))
 	switch v.(type) {
+	case uint32:
+		rra.RawValueType = RPCArgType_UInt
+		value, ok := v.(uint32)
+		rra.RawValue = make([]byte,4)
+		if ok {
+			binary.BigEndian.PutUint32(rra.RawValue, value)
+		}
+		fmt.Println("uint32 value: ", rra.RawValue)
+		//
+		//bytesBuffer := bytes.NewBuffer([]byte{})
+		//_ = binary.Read(bytesBuffer, binary.BigEndian, v.(uint32))
+		//rra.RawValue = bytesBuffer.Bytes()
 	case int32:
 		rra.RawValueType = RPCArgType_INT
 		bytesBuffer := bytes.NewBuffer([]byte{})

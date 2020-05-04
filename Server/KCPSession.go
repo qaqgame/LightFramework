@@ -87,6 +87,7 @@ func (kcpSession *KCPSession) Active(addr *net.UDPAddr) {
 	kcpSession.lastActiveTime = time.Now().Unix()
 	kcpSession.active = true
 
+	// kcpSession.logger.Warn("Remote addr: ", addr, "session id: ",kcpSession.sid)
 	kcpSession.remoteEndPoint = addr
 }
 
@@ -150,7 +151,7 @@ func (kcpSession *KCPSession) GetRemoteEndPoint() *net.UDPAddr {
 }
 
 func (kcpSession *KCPSession) DoReceiveInGateWay(buf []byte, size int) {
-	kcpSession.logger.Debug("DoReceiveinGateway")
+	// kcpSession.logger.Debug("DoReceiveinGateway")
 	// *kcpSession.recvData <- buf[:size]
 
 	//-----------
@@ -166,7 +167,7 @@ func (kcpSession *KCPSession) StopReceive() {
 }
 
 func (kcpSession *KCPSession) DoReceiveInMain() {
-	kcpSession.logger.Debug("DoReceiveinMain")
+	// kcpSession.logger.Debug("DoReceiveinMain")
 	kcpSession.receiveInMainActive = true
 
 	// tmp := kcpSession.recvData
@@ -178,7 +179,7 @@ func (kcpSession *KCPSession) DoReceiveInMain() {
 		// ----------
 		case data := <-kcpSession.recvData3:
 			// ----------
-			kcpSession.logger.Debug("DoReceiveInMain of KCPSession received data len: ", len(data))
+			// kcpSession.logger.Debug("DoReceiveInMain of KCPSession received data len: ", len(data))
 			ret := kcpSession.Kcp.Input(data, true, true)
 			if ret < 0 {
 				//log.Println("not a correct package ",ret)

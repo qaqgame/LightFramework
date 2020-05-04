@@ -55,6 +55,12 @@ func NewFSPGame(gameid uint32, fspparam *FSPParam) *FSPGame {
 	return fspgame
 }
 
+// GetGameID:
+func (fspgame *FSPGame) GetGameID() uint32 {
+	return fspgame.gameID
+}
+
+
 // Release : clear data and set state as None
 func (fspgame *FSPGame) Release() {
 	fspgame.SetGameState(None, 0, 0)

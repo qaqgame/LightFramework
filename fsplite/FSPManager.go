@@ -5,7 +5,7 @@ import "time"
 // FSPManager : fsplite manager
 type FSPManager struct {
 	gateway             *FSPGateway
-	mapGame             map[uint32]*FSPGame
+	mapGame             map[uint32]FSPGameI
 	param               *FSPParam
 	lastticks           int64
 	useCostomEnterFrame bool // 用户自定义方式
@@ -14,7 +14,7 @@ type FSPManager struct {
 // NewFSPManager : create a manager
 func NewFSPManager(_port int) *FSPManager {
 	fspmanager := new(FSPManager)
-	fspmanager.mapGame = make(map[uint32]*FSPGame)
+	fspmanager.mapGame = make(map[uint32]FSPGameI)
 	// gateway will automatically start after created
 	fspmanager.gateway = NewFSPGateway(_port)
 	// use default param creator to crate a new param
@@ -27,7 +27,7 @@ func NewFSPManager(_port int) *FSPManager {
 
 // Clean : clear data
 func (fspmanager *FSPManager) Clean() {
-	fspmanager.mapGame = make(map[uint32]*FSPGame)
+	fspmanager.mapGame = make(map[uint32]FSPGameI)
 	fspmanager.gateway.Clean()
 }
 
@@ -82,12 +82,25 @@ func (fspmanager *FSPManager) EnterFrame() {
 	}
 }
 
-// CreateGame : create a game
-func (fspmanager *FSPManager) CreateGame(gameid uint32) *FSPGame {
+//// CreateGame : create a game
+//func (fspmanager *FSPManager) CreateGame(gameid uint32) *FSPGame {
+//	fspgame := NewFSPGame(gameid, fspmanager.param)
+//
+//	fspmanager.mapGame[gameid] = fspgame
+//	return fspgame
+//}
+
+// CreateGameI : create a game fits interface
+func (fspmanager *FSPManager) CreateGameI(gameid uint32) FSPGameI{
 	fspgame := NewFSPGame(gameid, fspmanager.param)
 
 	fspmanager.mapGame[gameid] = fspgame
 	return fspgame
+}
+
+// AddUDefinedGame:
+func (fspmanager *FSPManager) AddUDefinedGame(i FSPGameI) {
+	fspmanager.mapGame[i.GetGameID()] = i
 }
 
 // ReleaseGame : relase a specified game
