@@ -99,10 +99,12 @@ type FSPGameI interface {
 	OnStateGameEnd()
 	IsGameEnd() bool
 	SetGameState(int, int, int)
-	EnterFrame()
+	EnterFrame(fspgamei FSPGameI)
 	AddCmdToCurrFrame(int32, string)
 	AddMsgToCurrFrame(uint32, *FSPMessage)
 	Release()
 	AddPlayer(uint32, *FSPSession) *FSPPlayer
 	GetGameID() uint32
+	OnRoundBeginCallBack()
+	OnRoundEndCallBack()
 }

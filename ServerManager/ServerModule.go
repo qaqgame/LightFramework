@@ -1,6 +1,7 @@
 package ServerManager
 
 import (
+	"code.holdonbush.top/ServerFramework/common"
 	"time"
 
 	"code.holdonbush.top/ServerFramework/IPCWork"
@@ -8,7 +9,7 @@ import (
 )
 
 type ServerModule struct {
-	MInfo  *ServerModuleInfo
+	MInfo  *common.ServerModuleInfo
 	Logger *log.Entry
 
 	// changes
@@ -17,7 +18,7 @@ type ServerModule struct {
 	Ipc       *IPCWork.IPCManager
 }
 
-func NewServerModule(info *ServerModuleInfo, _logger *log.Entry, _status int, _close chan int, _ipc *IPCWork.IPCManager) *ServerModule {
+func NewServerModule(info *common.ServerModuleInfo, _logger *log.Entry, _status int, _close chan int, _ipc *IPCWork.IPCManager) *ServerModule {
 	servermodule := new(ServerModule)
 	servermodule.MInfo = info
 	servermodule.Logger = _logger
@@ -35,7 +36,7 @@ type Server interface {
 	Start(servern Server)
 	Stop()
 	Tick()
-	GetModuleInfo() *ServerModuleInfo
+	GetModuleInfo() *common.ServerModuleInfo
 }
 
 const (
@@ -106,7 +107,7 @@ func (server *ServerModule) Release() {
 	server.Logger.Info("Server Released")
 }
 
-func (server *ServerModule) GetModuleInfo() *ServerModuleInfo {
+func (server *ServerModule) GetModuleInfo() *common.ServerModuleInfo {
 	return server.MInfo
 }
 

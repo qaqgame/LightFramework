@@ -80,10 +80,6 @@ func (rra *RPCRawArg) SetValue(v interface{}) {
 			binary.BigEndian.PutUint32(rra.RawValue, value)
 		}
 		fmt.Println("uint32 value: ", rra.RawValue)
-		//
-		//bytesBuffer := bytes.NewBuffer([]byte{})
-		//_ = binary.Read(bytesBuffer, binary.BigEndian, v.(uint32))
-		//rra.RawValue = bytesBuffer.Bytes()
 	case int32:
 		rra.RawValueType = RPCArgType_INT
 		bytesBuffer := bytes.NewBuffer([]byte{})

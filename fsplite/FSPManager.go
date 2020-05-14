@@ -74,10 +74,11 @@ func (fspmanager *FSPManager) Tick() {
 }
 
 // EnterFrame : nitify all games to EnterFrame
+// TODO: 要传递一个FspGameI的接口参数进入
 func (fspmanager *FSPManager) EnterFrame() {
 	if fspmanager.gateway.IsRunning {
 		for _, v := range fspmanager.mapGame {
-			v.EnterFrame()
+			v.EnterFrame(v)
 		}
 	}
 }

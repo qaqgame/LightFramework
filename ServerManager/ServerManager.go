@@ -1,8 +1,8 @@
 package ServerManager
 
 import (
-	log "github.com/sirupsen/logrus"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 type ServerManager struct {
@@ -18,52 +18,6 @@ func NewServerManager() *ServerManager {
 	return smr
 }
 
-//func (smr *ServerManager) StartServer(id int) {
-//	// log.Println("StartServer ",id)
-//	info := GetServerModuleInfo(id)
-//	// fullName := Namespace+"."+info.Name+"."+strconv.Itoa(info.Port)
-//	logger := log.WithFields(log.Fields{"Server":info.Name})
-//	if _,ok := smr.ServerModules[id]; !ok {
-//		module := ServerModule{}
-//		module.Create(info)
-//		smr.ServerModules[id] = &module
-//
-//		module.Start()
-//	} else {
-//		smr.ServerModules[id].Start()
-//	}
-//	logger.Info("Start Server",info.Name)
-//}
-//
-//func (smr *ServerManager) StartAllServer() {
-//	v := GetAllServerModuleInfo()
-//	for _,s := range v {
-//		if _,ok := smr.ServerModules[s.Id]; !ok {
-//			module := ServerModule{}
-//			module.Create(s)
-//			smr.ServerModules[s.Id] = &module
-//		} else {
-//			smr.ServerModules[s.Id].Start()
-//		}
-//	}
-//	log.WithFields(log.Fields{"Server":"ServerManager"}).Info("Started all servers")
-//}
-//
-//func (smr *ServerManager) StopServer(id int) {
-//	if v, ok := smr.ServerModules[id]; ok {
-//		v.Stop()
-//		v.Release()
-//		delete(smr.ServerModules, id)
-//	}
-//}
-//
-//func (smr *ServerManager) StopAllServer() {
-//	for _,v := range smr.ServerModules {
-//		v.Stop()
-//		v.Release()
-//	}
-//	smr.ServerModules = make(map[int]*ServerModule, 0)
-//}
 
 func (smr *ServerManager) Tick() {
 	// log.Println("Start Tick")

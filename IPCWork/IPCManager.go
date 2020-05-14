@@ -1,6 +1,7 @@
 package IPCWork
 
 import (
+	"code.holdonbush.top/ServerFramework/common"
 	"fmt"
 	"net"
 	"net/http"
@@ -18,10 +19,10 @@ type IPCManager struct {
 	stopSignal chan int
 }
 
-func NewIPCManager(id int) *IPCManager {
+func NewIPCManager(minfo *common.ServerModuleInfo) *IPCManager {
 	ipc := new(IPCManager)
-	ipc.myId = id
-	ipc.myPort = GetIPCInfo(ipc.myId).Port
+	ipc.myId = minfo.Id
+	ipc.myPort = minfo.Port
 	fmt.Println("MYPORT", ipc.myPort)
 	ipc.logger = log.WithFields(log.Fields{"Server": "IPCManager of" + strconv.Itoa(ipc.myId)})
 	ipc.isRunning = false

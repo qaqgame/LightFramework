@@ -1,6 +1,7 @@
 package ServerManager
 
 import (
+	"code.holdonbush.top/ServerFramework/common"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,27 +9,16 @@ import (
 	"os"
 )
 
-type ServerModuleInfo struct {
-	Id   int     `json:"Id"`
-	Name string  `json:"Name"`
-	Port int     `json:"Port"`
-}
-
-type ConfigUnMarshal struct {
-	ServerModuleInfos  []ServerModuleInfo     `json:"ConfigUnMarshal"`
-}
-
 const (
 	filename = "ServerConfig.json"
 )
 
 
 var (
-	Namespace = "LFW.Server"
-	mapServerModuleInfo = make(map[int]ServerModuleInfo)
+	mapServerModuleInfo = make(map[int]common.ServerModuleInfo)
 )
 
-func GetServerModuleInfo(id int) ServerModuleInfo {
+func GetServerModuleInfo(id int) common.ServerModuleInfo {
 	log.Println("GetServerModuleInfo")
 	if len(mapServerModuleInfo) == 0 {
 		readConfig()
@@ -37,13 +27,14 @@ func GetServerModuleInfo(id int) ServerModuleInfo {
 	return mapServerModuleInfo[id]
 }
 
-func GetAllServerModuleInfo() []ServerModuleInfo {
+func GetAllServerModuleInfo() []common.ServerModuleInfo {
 	if len(mapServerModuleInfo) == 0 {
 		readConfig()
 	}
-	ans := make([]ServerModuleInfo,len(mapServerModuleInfo))
+
+	ans := make([]common.ServerModuleInfo,len(mapServerModuleInfo))
 	for k,v := range mapServerModuleInfo{
-		ans[k] = v
+		ans[k-1] = v
 	}
 	return ans
 }
@@ -57,7 +48,7 @@ func readConfig() {
 	}
 
 	cnt, err := ioutil.ReadAll(f)
-	serverinfos := ConfigUnMarshal{}
+	serverinfos := common.ConfigUnMarshal{}
 	err = json.Unmarshal(cnt, &serverinfos)
 	if err != nil {
 		fmt.Println("readConfig error:",err)

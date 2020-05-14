@@ -190,14 +190,14 @@ func (fspgame *FSPGame) SetFlag(playerID uint32, flag *int16, flagname string) {
 }
 
 // EnterFrame : 驱动游戏状态
-func (fspgame *FSPGame) EnterFrame() {
+func (fspgame *FSPGame) EnterFrame(fspgamei FSPGameI) {
 	// clear player in the exit queue
 	for _, v := range fspgame.playerExitOnNextFrame {
 		v.Release()
 	}
 	// clear playerExitOnNextFrame
 	fspgame.playerExitOnNextFrame = make(map[uint32]*FSPPlayer)
-	fspgame.HandleGameState()
+	fspgame.HandleGameState(fspgamei)
 
 	if fspgame.State == None {
 		return
@@ -227,7 +227,7 @@ func (fspgame *FSPGame) EnterFrame() {
 }
 
 // HandleGameState :
-func (fspgame *FSPGame) HandleGameState() {
+func (fspgame *FSPGame) HandleGameState(i FSPGameI) {
 	switch fspgame.State {
 	case None:
 		break
@@ -269,6 +269,7 @@ func (fspgame *FSPGame) OnStateGameBegin() {
 		fspgame.IncRoundID()
 		fspgame.ClearRound()
 		fspgame.AddCmdToCurrFrame(RoundBegin, "RoundBegin")
+		fspgame.OnRoundEndCallBack()
 	}
 }
 
@@ -293,6 +294,7 @@ func (fspgame *FSPGame) OnStateControlStart() {
 		fspgame.SetGameState(RoundEnd, 0, 0)
 		fspgame.ClearRound()
 		fspgame.AddCmdToCurrFrame(RoundEnd, "RoundEnd")
+		fspgame.OnRoundEndCallBack()
 	}
 }
 
@@ -323,6 +325,16 @@ func (fspgame *FSPGame) OnStateGameEnd() {
 		fspgame.onGameEnd = nil
 	}
 }
+
+// OnRoundBeginCallBack()
+func (fspgame *FSPGame) OnRoundBeginCallBack() {
+
+}
+
+func (fspgame *FSPGame) OnRoundEndCallBack()  {
+
+}
+
 
 // IsGameEnd : if game is end
 func (fspgame *FSPGame) IsGameEnd() bool {
