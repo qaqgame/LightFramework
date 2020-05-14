@@ -71,14 +71,13 @@ func (ipc *IPCManager) CallRpc(args, reply interface{}, port int, rpcname string
 	return false
 }
 
-func (ipc *IPCManager) CallRpcAsync(args, reply interface{}, port int, rpcname string) *rpc.Call {
+func (ipc *IPCManager) CallRpcAsync(args, reply interface{}, port int, rpcname string) *rpc.Call{
 	c, err := rpc.DialHTTP("tcp4", "127.0.0.1:"+strconv.Itoa(port))
 	defer c.Close()
 	if err != nil {
 		ipc.logger.Warn("Dial tcp error:", err)
 	}
 
-	divCall := c.Go(rpcname, args, reply, nil)
-
-	return divCall
+	v := c.Go(rpcname, args, reply, nil)
+	return v
 }

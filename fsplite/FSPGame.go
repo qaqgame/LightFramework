@@ -114,19 +114,19 @@ func (fspgame *FSPGame) OnRecvFromPlayer(player *FSPPlayer, msg *FSPMessage) {
 // handleClientCmd : handle data
 func (fspgame *FSPGame) handleClientCmd(player *FSPPlayer, msg *FSPMessage) {
 	playerID := player.ID
-	fspgame.logger.Warn("before player id", player.ID, "authed: ", player.hasAuthed)
-	fspgame.logger.Debug("not authed")
+	// fspgame.logger.Warn("before player id", player.ID, "authed: ", player.hasAuthed)
+	// fspgame.logger.Debug("not authed")
 	if msg.Cmd == AUTH {
-		fspgame.logger.Debug("auth")
+		// fspgame.logger.Debug("auth")
 		player.SetAuth(AUTH)
-		fspgame.logger.Warn("player id", player.ID, "authed: ", player.hasAuthed)
+		// fspgame.logger.Warn("player id", player.ID, "authed: ", player.hasAuthed)
 	}
 
 	if !player.HasAuthed() {
 		return
 	}
 
-	fspgame.logger.Warn("Cmd is: ", msg.Cmd)
+	// fspgame.logger.Warn("Cmd is: ", msg.Cmd)
 
 	switch msg.Cmd {
 	case GameBegin:
@@ -232,22 +232,22 @@ func (fspgame *FSPGame) HandleGameState(i FSPGameI) {
 	case None:
 		break
 	case Create:
-		fspgame.OnStateGameCreate()
+		i.OnStateGameCreate()
 		break
 	case GameBegin:
-		fspgame.OnStateGameBegin()
+		i.OnStateGameBegin(i)
 		break
 	case RoundBegin:
-		fspgame.OnStateRoundBegin()
+		i.OnStateRoundBegin()
 		break
 	case ControlStart:
-		fspgame.OnStateControlStart()
+		i.OnStateControlStart(i)
 		break
 	case RoundEnd:
-		fspgame.OnStateRoundEnd()
+		i.OnStateRoundEnd()
 		break
 	case GameEnd:
-		fspgame.OnStateGameEnd()
+		i.OnStateGameEnd()
 		break
 	}
 }
@@ -261,7 +261,7 @@ func (fspgame *FSPGame) OnStateGameCreate() {
 }
 
 // OnStateGameBegin : listen roundbegin
-func (fspgame *FSPGame) OnStateGameBegin() {
+func (fspgame *FSPGame) OnStateGameBegin(i FSPGameI) {
 	// TODO: 是否需要检测玩家的退出情况，如果玩家在游戏回合开始前退出，应该是游戏结束还是继续游戏，只是该玩家无行动而已。
 
 	if fspgame.isFlagFull(fspgame.roundBeginFlag) {
@@ -269,7 +269,7 @@ func (fspgame *FSPGame) OnStateGameBegin() {
 		fspgame.IncRoundID()
 		fspgame.ClearRound()
 		fspgame.AddCmdToCurrFrame(RoundBegin, "RoundBegin")
-		fspgame.OnRoundEndCallBack()
+		i.OnRoundBeginCallBack()
 	}
 }
 
@@ -286,7 +286,7 @@ func (fspgame *FSPGame) OnStateRoundBegin() {
 }
 
 // OnStateControlStart : listen RoundEnd
-func (fspgame *FSPGame) OnStateControlStart() {
+func (fspgame *FSPGame) OnStateControlStart(i FSPGameI) {
 	// TODO: 是否需要检测玩家的退出情况，如果玩家在游戏回合开始前退出，应该是游戏结束还是继续游戏，只是该玩家无行动而已。
 
 	//
@@ -294,7 +294,7 @@ func (fspgame *FSPGame) OnStateControlStart() {
 		fspgame.SetGameState(RoundEnd, 0, 0)
 		fspgame.ClearRound()
 		fspgame.AddCmdToCurrFrame(RoundEnd, "RoundEnd")
-		fspgame.OnRoundEndCallBack()
+		i.OnRoundEndCallBack()
 	}
 }
 

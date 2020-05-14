@@ -172,14 +172,7 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 	}
 	// fspgateway.logger.Debug("Received data from UDP in FSPGateway, length is ", n)
 	// data's lenght > 0
-
-	if n <= 24 {
-		return
-	}
-
-	if n > 0 {
-		// use first four bits as sid
-		// TODO: read here error:
+	if n > 24 {
 		// sidbuf = fspgateway.receiveBuffer[24:28]
 		tmp := fspgateway.receiveBuffer[24:n]
 		// fspgateway.logger.Warn("Datas from conn: ", fspgateway.receiveBuffer[:n])
@@ -193,9 +186,9 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 		}
 		// fspgateway.logger.Info("all: ", fspgateway.receiveBuffer[:n])
 		// fspgateway.logger.Info("tmp: ", tmp, "len: ", len(tmp))
-		if fspmsg.String() != "" {
-			fspgateway.logger.Warn("fspmsg: ",fspmsg)
-		}
+		//if fspmsg.String() != "" {
+		//	fspgateway.logger.Warn("fspmsg: ",fspmsg)
+		//}
 		var session *FSPSession = nil
 		// tmp1 := binary.LittleEndian.Uint32(sidbuf)
 		// fspgateway.logger.Warn("LittleEndian res: ", tmp1)
@@ -204,7 +197,7 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 			// fspgateway.logger.Warn("Sid 为0，丢弃该包")
 			return
 		} else {
-			fspgateway.logger.Warn("Sid 为 : ", sid)
+			// fspgateway.logger.Warn("Sid 为 : ", sid)
 			session = fspgateway.GetSession(sid)
 		}
 

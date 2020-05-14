@@ -92,9 +92,9 @@ type GameProcess interface {
 
 type FSPGameI interface {
 	OnStateGameCreate()
-	OnStateGameBegin()
+	OnStateGameBegin(i FSPGameI)
 	OnStateRoundBegin()
-	OnStateControlStart()
+	OnStateControlStart(i FSPGameI)
 	OnStateRoundEnd()
 	OnStateGameEnd()
 	IsGameEnd() bool
