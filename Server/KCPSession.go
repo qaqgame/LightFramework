@@ -79,7 +79,7 @@ func (kcpSession *KCPSession) SetUserId(uid uint32) {
 }
 
 func (kcpSession *KCPSession) HandKcpSend(buf []byte, size int) {
-	kcpSession.logger.Debug("After len: ", len(buf), size)
+	// kcpSession.logger.Debug("After len: ", len(buf), size)
 	kcpSession.sender(kcpSession, buf, size)
 }
 

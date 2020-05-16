@@ -122,7 +122,7 @@ func (fspmanager *FSPManager) AddPlayers(gameid uint32, playerids map[uint32]uin
 	for k, v := range playerids {
 		session := fspmanager.gateway.CreateSession()
 		game.AddPlayer(k, session, v)
-		sessionids[v] = session.GetSid()
+		sessionids[k] = session.GetSid()
 	}
 
 	return sessionids

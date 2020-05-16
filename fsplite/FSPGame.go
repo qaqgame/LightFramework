@@ -1,6 +1,7 @@
 package fsplite
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 )
 
@@ -127,22 +128,24 @@ func (fspgame *FSPGame) GetPlayerMap() map[uint32]*FSPPlayer {
 
 // OnRecvFromPlayer : listener of player
 func (fspgame *FSPGame) OnRecvFromPlayer(player *FSPPlayer, msg *FSPMessage) {
+	fmt.Println("Invoke OnRecvFromPlayer")
 	// handle data player received from session
 	fspgame.handleClientCmd(player, msg)
 }
 
 // handleClientCmd : handle data
 func (fspgame *FSPGame) handleClientCmd(player *FSPPlayer, msg *FSPMessage) {
-	playerID := player.ID
+	fmt.Println("Invoke handleClientCmd")
 	if msg.Cmd == AUTH {
 		// fspgame.logger.Debug("auth")
 		player.SetAuth(AUTH)
 		// fspgame.logger.Warn("player id", player.ID, "authed: ", player.hasAuthed)
 	}
-
 	if !player.HasAuthed() {
+		fspgame.logger.Warn("not authed")
 		return
 	}
+	fspgame.logger.Info("Msg: ",msg)
 	switch msg.Cmd {
 	case GameBegin:
 		fspgame.SetFlag(player.IdInGame, &fspgame.gameBeginFlag, "gamebeginflag")
@@ -165,17 +168,17 @@ func (fspgame *FSPGame) handleClientCmd(player *FSPPlayer, msg *FSPMessage) {
 		fspgame.SetFlag(player.IdInGame, &fspgame.gameEndFlag, "gameendflag")
 		fspgame.logger.Info("gameendflag value: ", fspgame.gameEndFlag)
 	case GameExit:
-		fspgame.HandleGameExit(playerID, msg)
-		fspgame.logger.Info("receive gameexit cmd from player id :", playerID)
+		fspgame.HandleGameExit(player, msg)
+		fspgame.logger.Info("receive gameexit cmd from player id :", player.ID)
 	default:
-		fspgame.AddMsgToCurrFrame(playerID, msg)
+		fspgame.AddMsgToCurrFrame(player.IdInGame, msg)
 	}
 }
 
 // HandleGameExit :
-func (fspgame *FSPGame) HandleGameExit(playerID uint32, msg *FSPMessage) {
-	fspgame.AddMsgToCurrFrame(playerID, msg)
-	player := fspgame.GetPlayer(playerID)
+func (fspgame *FSPGame) HandleGameExit(fspplayer *FSPPlayer, msg *FSPMessage) {
+	fspgame.AddMsgToCurrFrame(fspplayer.IdInGame, msg)
+	player := fspgame.GetPlayer(fspplayer.ID)
 	if player != nil {
 		player.WaitForExit = true
 
@@ -187,13 +190,13 @@ func (fspgame *FSPGame) HandleGameExit(playerID uint32, msg *FSPMessage) {
 }
 
 // AddMsgToCurrFrame : add game related msg to lockedframe
-func (fspgame *FSPGame) AddMsgToCurrFrame(playerID uint32, msg *FSPMessage) {
+func (fspgame *FSPGame) AddMsgToCurrFrame(idInGame uint32, msg *FSPMessage) {
 	fspgame.LockedFrame.Msgs = append(fspgame.LockedFrame.Msgs, msg)
 }
 
 // AddCmdToCurrFrame : add state related operation to lockedframe
 func (fspgame *FSPGame) AddCmdToCurrFrame(cmd int32, cnt []byte) {
-	// TODO: update data format - notify different state info to client(eg. if need send round id to client)
+	logrus.Info("AddToCmd: ",cmd)
 	msg := new(FSPMessage)
 	msg.PlayerID = 0
 	msg.Content = cnt
@@ -205,13 +208,14 @@ func (fspgame *FSPGame) AddCmdToCurrFrame(cmd int32, cnt []byte) {
 
 // SetFlag : set flag
 func (fspgame *FSPGame) SetFlag(playerIDInGame uint32, flag *int16, flagname string) {
-	*flag |= 0x01 << (playerIDInGame - 1)
+	*flag |= 0x01 << playerIDInGame
 	fspgame.logger.Debug("flag name: ", flagname, "value", *flag)
 }
 
 // EnterFrame : 驱动游戏状态
 func (fspgame *FSPGame) EnterFrame() {
 	// clear player in the exit queue
+	// fmt.Println("invoke EnterFrame")
 	for _, v := range fspgame.playerExitOnNextFrame {
 		v.Release()
 	}
@@ -424,7 +428,7 @@ func (fspgame *FSPGame) SetGameState(gamestate, param1, param2 int) {
 func (fspgame *FSPGame) isFlagFull(flag int16) bool {
 	if len(fspgame.playerList) > 0 {
 		for _, v := range fspgame.playerList {
-			if (flag & (0x01 << (v.IdInGame - 1))) == 0 {
+			if (flag & (0x01 << v.IdInGame)) == 0 {
 				return false
 			}
 		}

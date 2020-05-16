@@ -177,7 +177,7 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 
 // HandSessionSender : callback function of kcp
 func (gateway *Gateway) HandSessionSender(session ISession, buf []byte, size int) {
-	gateway.logger.Info("HandSessionSender in Gateway, session's id is ", session.GetId())
+	// gateway.logger.Info("HandSessionSender in Gateway, session's id is ", session.GetId())
 	// gateway.logger.Info("HandSessionSender in Gateway, data size is ", size, len(buf))
 
 	// gateway.logger.Debug("HandSessionSender in Gateway, data is: ", buf[:size])

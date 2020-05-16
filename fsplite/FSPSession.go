@@ -117,7 +117,7 @@ func (fspsession *FSPSession) IsActive() bool {
 	}
 
 	des := time.Now().Unix() - fspsession.lastActiveTime
-	if des > SessionActiveTimeout {
+	if des > int64(SessionActiveTimeout){
 		fspsession.isActive = false
 	}
 	return fspsession.isActive
