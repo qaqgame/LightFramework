@@ -3,6 +3,7 @@ package fsplite
 // FSPPlayer :
 type FSPPlayer struct {
 	ID           uint32
+	IdInGame     uint32
 	session      *FSPSession
 	recvListener RecvListener
 	hasAuthed    bool
@@ -15,10 +16,11 @@ type FSPPlayer struct {
 // RecvListener :
 type RecvListener func(*FSPPlayer, *FSPMessage)
 
-// NewFSPPlayer : create a new fspplayer
-func NewFSPPlayer(playerID uint32, session *FSPSession, authid int32, listener RecvListener) *FSPPlayer {
+// NewFSPPlayer : create a new fspplayer, playerID is player's uid
+func NewFSPPlayer(playerID uint32,idInGame uint32 , session *FSPSession, authid int32, listener RecvListener) *FSPPlayer {
 	fspplayer := new(FSPPlayer)
 	fspplayer.ID = playerID
+	fspplayer.IdInGame = idInGame
 	fspplayer.recvListener = listener
 	fspplayer.session = session
 	fspplayer.hasAuthed = false

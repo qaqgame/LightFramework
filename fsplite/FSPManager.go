@@ -74,22 +74,13 @@ func (fspmanager *FSPManager) Tick() {
 }
 
 // EnterFrame : nitify all games to EnterFrame
-// TODO: 要传递一个FspGameI的接口参数进入
 func (fspmanager *FSPManager) EnterFrame() {
 	if fspmanager.gateway.IsRunning {
 		for _, v := range fspmanager.mapGame {
-			v.EnterFrame(v)
+			v.EnterFrame()
 		}
 	}
 }
-
-//// CreateGame : create a game
-//func (fspmanager *FSPManager) CreateGame(gameid uint32) *FSPGame {
-//	fspgame := NewFSPGame(gameid, fspmanager.param)
-//
-//	fspmanager.mapGame[gameid] = fspgame
-//	return fspgame
-//}
 
 // CreateGameI : create a game fits interface
 func (fspmanager *FSPManager) CreateGameI(gameid uint32) FSPGameI{
@@ -114,22 +105,23 @@ func (fspmanager *FSPManager) ReleaseGame(gameid uint32) {
 }
 
 // AddPlayer : add a player to a specified game, use player's uid as param, and retrun session's sid
-func (fspmanager *FSPManager) AddPlayer(gameid, playerid uint32) uint32 {
+func (fspmanager *FSPManager) AddPlayer(gameid, playerid, idInGame uint32) uint32 {
 	game := fspmanager.mapGame[gameid]
 	session := fspmanager.gateway.CreateSession()
 
-	game.AddPlayer(playerid, session)
+	game.AddPlayer(playerid, session, idInGame)
 	return session.GetSid()
 }
 
 // AddPlayers : add players to specified game. return a map which key is player uid and value is player session's sid
-func (fspmanager *FSPManager) AddPlayers(gameid uint32, playerids []uint32) map[uint32]uint32 {
+func (fspmanager *FSPManager) AddPlayers(gameid uint32, playerids map[uint32]uint32) map[uint32]uint32 {
 	game := fspmanager.mapGame[gameid]
 	sessionids := make(map[uint32]uint32)
 
-	for _, v := range playerids {
+	//playerids is player's uid
+	for k, v := range playerids {
 		session := fspmanager.gateway.CreateSession()
-		game.AddPlayer(v, session)
+		game.AddPlayer(k, session, v)
 		sessionids[v] = session.GetSid()
 	}
 

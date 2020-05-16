@@ -92,19 +92,35 @@ type GameProcess interface {
 
 type FSPGameI interface {
 	OnStateGameCreate()
-	OnStateGameBegin(i FSPGameI)
+	OnStateGameBegin()
 	OnStateRoundBegin()
-	OnStateControlStart(i FSPGameI)
+	OnStateControlStart()
 	OnStateRoundEnd()
 	OnStateGameEnd()
 	IsGameEnd() bool
 	SetGameState(int, int, int)
-	EnterFrame(fspgamei FSPGameI)
-	AddCmdToCurrFrame(int32, string)
+	EnterFrame()
+	AddCmdToCurrFrame(int32, []byte)
 	AddMsgToCurrFrame(uint32, *FSPMessage)
 	Release()
-	AddPlayer(uint32, *FSPSession) *FSPPlayer
+	AddPlayer(uint32, *FSPSession, uint32) *FSPPlayer
 	GetGameID() uint32
-	OnRoundBeginCallBack()
-	OnRoundEndCallBack()
+	// session中收到msg时调用
+	OnGameBeginCallBack(*FSPPlayer, *FSPMessage)
+	// 将消息添加到frame后调用
+	OnGameBeginMsgAddCallBack()
+	// 生成GameBegin消息
+	CreateGameBeginMsg() []byte
+
+	OnRoundBeginCallBack(*FSPPlayer, *FSPMessage)
+	OnRoundBeginMsgAddCallBack()
+	CreateRoundMsg() []byte
+
+	OnControlStartCallBack(*FSPPlayer, *FSPMessage)
+	OnControlStartMsgAddCallBack()
+	CreateControlStartMsg() []byte
+
+	OnRoundEndCallBack(*FSPPlayer, *FSPMessage)
+	OnRoundEndMsgAddCallBack()
+	CreateRoundEndMsg() []byte
 }
