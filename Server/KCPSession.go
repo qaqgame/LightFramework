@@ -21,12 +21,12 @@ type KCPSession struct {
 	lastActiveTime int64
 	nextUpdateTime uint32
 	active         bool
-	recvData       *chan []byte
+	recvData1      *chan []byte
 	recvData2      *chan []byte
 
 	recvData3           chan []byte
 	closerecv           chan int
-	receiveInMainActive bool
+	// receiveInMainActive bool
 
 	needKCPUpdate bool
 	sessionPing   uint32
@@ -50,21 +50,21 @@ func NewKCPSession(_sid uint32, _sender Sender, _listener ISessionListener, kcpc
 	kcpSession.sessionPing = 0
 	kcpSession.active = false
 	c1 := make(chan []byte, 128)
-	kcpSession.recvData = &c1
+	kcpSession.recvData1 = &c1
 	c2 := make(chan []byte, 128)
 	kcpSession.recvData2 = &c2
 	//--------
 	kcpSession.recvData3 = make(chan []byte, 128)
 	kcpSession.closerecv = make(chan int, 5)
-	kcpSession.receiveInMainActive = false
+	// kcpSession.receiveInMainActive = false
 	//--------
 
 	kcpSession.needKCPUpdate = false
 
 	kcpSession.Kcp = kcp.NewKCP(kcpconv, kcpSession.HandKcpSend)
-	kcpSession.Kcp.NoDelay(1, 20, 2, 1)
+	kcpSession.Kcp.NoDelay(1, 10, 2, 1)
 	kcpSession.Kcp.WndSize(128, 128)
-	kcpSession.Initialize()
+	// kcpSession.Initialize()
 
 	kcpSession.logger.Info("KCPSession Created")
 	return kcpSession
@@ -139,10 +139,10 @@ func (kcpSession *KCPSession) Send(cnt []byte, length int) bool {
 		kcpSession.logger.Info("Client Closed, Send failed")
 		return false
 	}
-	kcpSession.logger.Debug("Before len : ", len(cnt))
+	// kcpSession.logger.Debug("Before len : ", len(cnt))
 	i := kcpSession.Kcp.Send(cnt)
 	//log.Println("KCPSession *kcpSession.Send() i: ",i)
-	kcpSession.logger.Debug("Send successfully, data len: ", i)
+	// kcpSession.logger.Debug("Send successfully, data len: ", i)
 	return i >= 0
 }
 
@@ -152,7 +152,7 @@ func (kcpSession *KCPSession) GetRemoteEndPoint() *net.UDPAddr {
 
 func (kcpSession *KCPSession) DoReceiveInGateWay(buf []byte, size int) {
 	// kcpSession.logger.Debug("DoReceiveinGateway")
-	// *kcpSession.recvData <- buf[:size]
+	*kcpSession.recvData1 <- buf[:size]
 
 	//-----------
 	kcpSession.recvData3 <- buf[:size]
@@ -161,23 +161,22 @@ func (kcpSession *KCPSession) DoReceiveInGateWay(buf []byte, size int) {
 
 // StopReceive : signal of close goroutine : DoReceiveInMain
 func (kcpSession *KCPSession) StopReceive() {
-	if kcpSession.receiveInMainActive {
-		kcpSession.closerecv <- 1
-	}
+
 }
 
 func (kcpSession *KCPSession) DoReceiveInMain() {
 	// kcpSession.logger.Debug("DoReceiveinMain")
-	kcpSession.receiveInMainActive = true
+	// kcpSession.receiveInMainActive = true
 
 	// tmp := kcpSession.recvData
 	// kcpSession.recvData = kcpSession.recvData2
 	// kcpSession.recvData2 = tmp
+	kcpSession.recvData1, kcpSession.recvData2 = kcpSession.recvData2, kcpSession.recvData1
 
 	for true {
 		select {
 		// ----------
-		case data := <-kcpSession.recvData3:
+		case data := <- *kcpSession.recvData2:
 			// ----------
 			// kcpSession.logger.Debug("DoReceiveInMain of KCPSession received data len: ", len(data))
 			ret := kcpSession.Kcp.Input(data, true, true)
@@ -194,15 +193,14 @@ func (kcpSession *KCPSession) DoReceiveInMain() {
 					kcpSession.listener.OnReceive(kcpSession, buf, size)
 				}
 			}
-		case <-kcpSession.closerecv:
-			kcpSession.receiveInMainActive = false
+		default:
 			return
 		}
 	}
 }
 
 func (kcpSession *KCPSession) Tick(currentTime uint32) {
-	// kcpSession.DoReceiveInMain()
+	kcpSession.DoReceiveInMain()
 	current := currentTime
 	if kcpSession.needKCPUpdate || current >= kcpSession.nextUpdateTime {
 		kcpSession.Kcp.Update()

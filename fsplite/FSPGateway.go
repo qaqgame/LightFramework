@@ -186,9 +186,9 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 		}
 		// fspgateway.logger.Info("all: ", fspgateway.receiveBuffer[:n])
 		// fspgateway.logger.Info("tmp: ", tmp, "len: ", len(tmp))
-		//if fspmsg.String() != "" {
-		//	fspgateway.logger.Warn("fspmsg: ",fspmsg)
-		//}
+		if fspmsg.String() != "" {
+			fspgateway.logger.Warn("fspmsg: ",fspmsg)
+		}
 		var session *FSPSession = nil
 		// tmp1 := binary.LittleEndian.Uint32(sidbuf)
 		// fspgateway.logger.Warn("LittleEndian res: ", tmp1)

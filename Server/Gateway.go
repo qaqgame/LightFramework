@@ -140,7 +140,7 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 		var kcpsession ISession = nil
 		uid := binary.BigEndian.Uint32(sidBuf)
 		//log.Println("read ",uid)
-		gateway.logger.Debug("Uid part of ProtocolHead is ", uid," sidbuf: ", sidBuf)
+		// gateway.logger.Debug("Uid part of ProtocolHead is ", uid," sidbuf: ", sidBuf)
 		if uid == 0 {
 
 			for k, v := range gateway.mapSession {
@@ -150,10 +150,10 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 				}
 			}
 			if kcpsession == nil {
-				gateway.logger.Debug("Uid is 0")
+				// gateway.logger.Debug("Uid is 0")
 				sid := SId.NewId()
 				kcpsession = NewKCPSession(sid, gateway.HandSessionSender, gateway.listener, 1, gateway.logger)
-				gateway.logger.Debug("KCPSession created is : ", sid)
+				// gateway.logger.Debug("KCPSession created is : ", sid)
 				gateway.rwMutex.Lock()
 				gateway.mapSession[sid] = kcpsession
 				gateway.rwMutex.Unlock()
@@ -161,7 +161,7 @@ func (gateway *Gateway) DoReceiveInGoroutine() {
 				kcpsession = nil
 			}
 		} else {
-			gateway.logger.Debug("Uid isn't 0 but is ", uid)
+			// gateway.logger.Debug("Uid isn't 0 but is ", uid)
 			kcpsession = gateway.mapSession[uid]
 		}
 

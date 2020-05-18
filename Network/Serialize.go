@@ -2,10 +2,8 @@ package Network
 
 import (
 	"encoding/binary"
-	"log"
-	"time"
-
 	"github.com/golang/protobuf/proto"
+	"log"
 )
 
 func SerializeNetMsg(nm *NetMessage) []byte {
@@ -27,7 +25,7 @@ func SerializeNetMsg(nm *NetMessage) []byte {
 	buf = append(buf, buf2...)
 	buf = append(buf, nm.Content...)
 
-	log.Println(time.Now().Unix(), buf)
+	// log.Println(time.Now().Unix(), buf)
 
 	return buf
 }

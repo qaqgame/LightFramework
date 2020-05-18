@@ -57,7 +57,7 @@ func (netManager *NetManager) Tick() {
 
 func (netManager *NetManager) OnReceive(session ISession, bytes []byte, length int) {
 	//log.Println("onreceive buf lenght: ",len(bytes))
-	netManager.logger.Debug("OnReceive in NetManager, receive data len: ", len(bytes))
+	// netManager.logger.Debug("OnReceive in NetManager, receive data len: ", len(bytes))
 	msg := Network.DeserializeNetMsg(bytes)
 
 	if session.IsAuth() {
@@ -242,14 +242,14 @@ func (netManager *NetManager) HandlePBMessage(session ISession, pb *Network.NetM
 	if helper != nil {
 		obj := helper.TMsg
 		//fmt.Println("HandlePBMessge: ",helper.TMsg,obj,obj.(proto.Message),reflect.TypeOf(obj),reflect.TypeOf(obj.(proto.Message)))
-		netManager.logger.Debug("HandlePBMessage in NetManager, TMsg type is", obj)
+		// netManager.logger.Debug("HandlePBMessage in NetManager, TMsg type is", obj)
 		err := proto.Unmarshal(pb.Content, obj)
 		if err != nil {
 			//log.Println("unmarshal content error: ",err)
 			netManager.logger.Warn("HandlePBMessage in NetManager, Unmarshal content error:", err)
 		}
 		//fmt.Println("unmarshaled: ",obj)
-		netManager.logger.Debug("HandlePBMessage in NetManager, Unmarshal result:", obj)
+		// netManager.logger.Debug("HandlePBMessage in NetManager, Unmarshal result:", obj)
 		if obj != nil {
 			//in := []reflect.Value{reflect.ValueOf(session),reflect.ValueOf(pb.Head.Index),reflect.ValueOf(obj)}
 			//helper.onMsg.Func.Call(in)

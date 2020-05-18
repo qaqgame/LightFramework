@@ -1,5 +1,7 @@
 package fsplite
 
+import "github.com/sirupsen/logrus"
+
 // FSPPlayer :
 type FSPPlayer struct {
 	ID           uint32
@@ -46,7 +48,7 @@ func (fspplayer *FSPPlayer) Release() {
 func (fspplayer *FSPPlayer) SendToClient(frame *FSPFrame) {
 	if frame != nil {
 		// todo - frameCache store fspmesage
-		if !fspplayer.frameCache.Contain(frame) {
+		if !fspplayer.frameCache.Contain(frame) || len(frame.Msgs) == 0 {
 			fspplayer.frameCache.Push(frame)
 		}
 	}
@@ -63,7 +65,11 @@ func (fspplayer *FSPPlayer) SendToClient(frame *FSPFrame) {
 
 // send
 func (fspplayer *FSPPlayer) sendinterval(frame *FSPFrame) bool {
+	// logrus.Warn("frame.FrameID: ",frame.FrameID, "lastFrameID: ",fspplayer.lastFrameID)
 	if frame.FrameID != 0 && frame.FrameID <= fspplayer.lastFrameID {
+		if frame.FrameID != 0 {
+			logrus.Warn("frame.FrameID: ",frame.FrameID, "lastFrameID: ",fspplayer.lastFrameID)
+		}
 		return true
 	}
 
@@ -72,6 +78,8 @@ func (fspplayer *FSPPlayer) sendinterval(frame *FSPFrame) bool {
 			fspplayer.lastFrameID = frame.FrameID
 			return true
 		}
+	} else {
+		logrus.Warn("session id null in sendinterval")
 	}
 
 	return false

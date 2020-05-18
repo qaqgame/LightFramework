@@ -22,6 +22,7 @@ type FSPGame struct {
 
 	onGameExit OnGameExit
 	onGameEnd  OnGameEnd
+	bufferQueue      *Queue
 
 	CurrRoundID int32
 	CurrFrameID int32
@@ -46,12 +47,14 @@ func NewFSPGame(gameid uint32, fspparam *FSPParam) *FSPGame {
 	fspgame.gameID = gameid
 	fspgame.maxplayerNum = 10
 	fspgame.LockedFrame = new(FSPFrame)
+	fspgame.LockedFrame.Msgs = make([]*FSPMessage,0)
 	fspgame.CurrRoundID = 0
 	fspgame.CurrFrameID = 0
 	fspgame.playerList = make(map[uint32]*FSPPlayer)
 	fspgame.playerExitOnNextFrame = make(map[uint32]*FSPPlayer)
 	fspgame.param = fspparam
 	fspgame.UpperController = nil
+	fspgame.bufferQueue = NewQueue()
 
 	fspgame.logger = logrus.WithFields(logrus.Fields{"GameID": fspgame.gameID})
 
@@ -139,12 +142,21 @@ func (fspgame *FSPGame) handleClientCmd(player *FSPPlayer, msg *FSPMessage) {
 	if msg.Cmd == AUTH {
 		// fspgame.logger.Debug("auth")
 		player.SetAuth(AUTH)
+		for fspgame.bufferQueue.Len() >0 {
+			fspgame.handleClientMsg(player, fspgame.bufferQueue.Pop().(*FSPMessage))
+		}
+		return
 		// fspgame.logger.Warn("player id", player.ID, "authed: ", player.hasAuthed)
 	}
 	if !player.HasAuthed() {
 		fspgame.logger.Warn("not authed")
+		fspgame.bufferQueue.Push(msg)
 		return
 	}
+	fspgame.handleClientMsg(player, msg)
+}
+
+func (fspgame *FSPGame) handleClientMsg(player *FSPPlayer, msg *FSPMessage) {
 	fspgame.logger.Info("Msg: ",msg)
 	switch msg.Cmd {
 	case GameBegin:
@@ -227,7 +239,7 @@ func (fspgame *FSPGame) EnterFrame() {
 		return
 	}
 
-	if fspgame.LockedFrame.FrameID != 0 || len(fspgame.LockedFrame.Msgs) > 0 {
+	if fspgame.LockedFrame.FrameID != 0 || len(fspgame.LockedFrame.Msgs) >= 0 {
 		for k, v := range fspgame.playerList {
 			v.SendToClient(fspgame.LockedFrame)
 			if v.WaitForExit {
@@ -240,12 +252,14 @@ func (fspgame *FSPGame) EnterFrame() {
 	// if frameid is 0, means that msg is not game msg. then we redefine a new lockedframe
 	if fspgame.LockedFrame.FrameID == 0 {
 		fspgame.LockedFrame = new(FSPFrame)
+		fspgame.LockedFrame.Msgs = make([]*FSPMessage,0)
 	}
 
 	// only when state is RoundBegin or ControlStart, can we increase CurrFrameID
 	if fspgame.State == RoundBegin || fspgame.State == ControlStart {
 		fspgame.CurrFrameID++
 		fspgame.LockedFrame = new(FSPFrame)
+		fspgame.LockedFrame.Msgs = make([]*FSPMessage,0)
 		fspgame.LockedFrame.FrameID = fspgame.CurrFrameID
 	}
 }
