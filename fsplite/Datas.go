@@ -1,6 +1,7 @@
 package fsplite
 
 import (
+	"math/rand"
 	"time"
 )
 
@@ -59,9 +60,11 @@ func (fspframe *FSPFrame) Empty() bool {
 
 var reftime time.Time
 var sid uint32 = 0
-
+var randomSeed int32
 func init() {
 	reftime = time.Now()
+	rand.Seed(time.Now().UnixNano())
+	randomSeed = rand.Int31()
 }
 
 // NewDefaultFspParam : Create a default FspPrame
@@ -81,6 +84,7 @@ func NewDefaultFspParam(host string, port int) *FSPParam {
 	fspparam.EnableAutoBuffer = EnableAutoBuffer
 	fspparam.DefaultSpeed = DefaultSpeedUp
 	fspparam.JitterBufferSize = JitterBufferSize
+	fspparam.RandomSeed = randomSeed
 
 	return fspparam
 }
@@ -103,7 +107,7 @@ type FSPGameI interface {
 	AddCmdToCurrFrame(int32, []byte)
 	AddMsgToCurrFrame(uint32, *FSPMessage)
 	Release()
-	AddPlayer(uint32, *FSPSession, uint32) *FSPPlayer
+	AddPlayer(uint32, *FSPSession, uint32, uint32, uint32) *FSPPlayer
 	GetGameID() uint32
 	// session中收到msg时调用
 	OnGameBeginCallBack(*FSPPlayer, *FSPMessage)
@@ -123,4 +127,8 @@ type FSPGameI interface {
 	OnRoundEndCallBack(*FSPPlayer, *FSPMessage)
 	OnRoundEndMsgAddCallBack()
 	CreateRoundEndMsg() []byte
+
+	OnGameEndCallBack(*FSPPlayer, *FSPMessage)
+	OnGameEndMsgAddCallBack()
+	CreateGameEndMsg() []byte
 }

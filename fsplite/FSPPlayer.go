@@ -13,13 +13,16 @@ type FSPPlayer struct {
 	frameCache   *Queue
 	lastFrameID  int32
 	WaitForExit  bool
+	//todo: initialize masks
+	FriendMask   uint32
+	EnemyMask    uint32
 }
 
 // RecvListener :
 type RecvListener func(*FSPPlayer, *FSPMessage)
 
 // NewFSPPlayer : create a new fspplayer, playerID is player's uid
-func NewFSPPlayer(playerID uint32,idInGame uint32 , session *FSPSession, authid int32, listener RecvListener) *FSPPlayer {
+func NewFSPPlayer(playerID uint32,idInGame, friendMask, enemyMask uint32 , session *FSPSession, authid int32, listener RecvListener) *FSPPlayer {
 	fspplayer := new(FSPPlayer)
 	fspplayer.ID = playerID
 	fspplayer.IdInGame = idInGame
@@ -30,6 +33,8 @@ func NewFSPPlayer(playerID uint32,idInGame uint32 , session *FSPSession, authid 
 	fspplayer.frameCache = NewQueue()
 	fspplayer.WaitForExit = false
 	fspplayer.lastFrameID = 0
+	fspplayer.FriendMask = friendMask
+	fspplayer.EnemyMask = enemyMask
 
 	fspplayer.session.SetReceiveListener(fspplayer.OnRecvFromSession)
 
@@ -68,7 +73,7 @@ func (fspplayer *FSPPlayer) sendinterval(frame *FSPFrame) bool {
 	// logrus.Warn("frame.FrameID: ",frame.FrameID, "lastFrameID: ",fspplayer.lastFrameID)
 	if frame.FrameID != 0 && frame.FrameID <= fspplayer.lastFrameID {
 		if frame.FrameID != 0 {
-			logrus.Warn("frame.FrameID: ",frame.FrameID, "lastFrameID: ",fspplayer.lastFrameID)
+			// logrus.Warn("frame.FrameID: ",frame.FrameID, "lastFrameID: ",fspplayer.lastFrameID)
 		}
 		return true
 	}

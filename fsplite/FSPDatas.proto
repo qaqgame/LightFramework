@@ -18,6 +18,7 @@ message FSPParam {
     // jitterBufferSize - buffer size
     int32 jitterBufferSize = 12;
     bool enableAutoBuffer = 13;
+    int32 randomSeed = 14;
 }
 
 // FSPMessage :
