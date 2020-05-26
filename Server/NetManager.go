@@ -18,6 +18,7 @@ type NetManager struct {
 	lastRPCISession   ISession
 	mapListenerHelper map[uint32]*ListenerHelper
 	logger            *log.Entry
+	protomessages     map[string]proto.Message
 }
 
 func NewNetManager(port int, arg ...interface{}) *NetManager {
@@ -31,6 +32,7 @@ func NewNetManager(port int, arg ...interface{}) *NetManager {
 	n.Gateway = g
 	n.rpc = Network.NewRPCManager()
 	n.mapListenerHelper = make(map[uint32]*ListenerHelper)
+	n.protomessages = make(map[string]proto.Message)
 	n.logger.Info("NetManager Created")
 	return n
 }
@@ -85,6 +87,10 @@ func (netManager *NetManager) SetAuthCmd(cmd uint32) {
 	netManager.authCmd = cmd
 }
 
+func (netManager *NetManager) RegisterProtoMsg(name string, value proto.Message)  {
+	netManager.protomessages[name] = value
+}
+
 // RPC
 func (netManager *NetManager) HandleRPCMessage(session ISession, rpc *Network.RPCMessage) {
 	// names := strings.Split(rpc.Name,".")
@@ -100,18 +106,29 @@ func (netManager *NetManager) HandleRPCMessage(session ISession, rpc *Network.RP
 
 		v := rpc.GetArgs()
 		rawArgs := rpc.RPCRawArgs
-		fmt.Println("ARGS NEED: ", m.Type.NumIn(), "args have: ", len(v))
+		fmt.Println("ARGS NEED: ", m.Type.NumIn(), "args have: ", len(v), "args len", len(rawArgs))
 
 		if len(v) == (m.Type.NumIn() - 2) {
 			for i := 0; i < len(rawArgs); i++ {
 				if rawArgs[i].RawValueType == Network.RPCArgType_PBObject {
-					t := m.Type.In(i + 1)
-					err := proto.Unmarshal(rawArgs[i].RawValue, t.(proto.Message))
+					t := m.Type.In(i + 2)
+					//pbtype,err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(t.String()))
+					//if err != nil {
+					//	fmt.Println("find message error: ",err)
+					//}
+					fmt.Println("t : ",t.String(), i)
+					v1 := netManager.protomessages[t.String()]
+					var b proto.Message
+					b = v1
+					err := proto.Unmarshal(rawArgs[i].RawValue, b)
 					if err != nil {
 						//log.Println("error handlerrpcmessage: ",err)
 						netManager.logger.Error("HandleRPCMessage in NetManager, error Unmarshal: ", err)
 					}
-					v[i] = reflect.ValueOf(t.(proto.Message))
+
+					fmt.Println("unmarshal message: ",b)
+					fmt.Println("unmarshal message: ",netManager.protomessages[t.String()])
+					v[i] = reflect.ValueOf(b)
 				}
 				in[i+2] = v[i]
 			}

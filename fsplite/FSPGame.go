@@ -276,7 +276,7 @@ func (fspgame *FSPGame) EnterFrame() {
 		fspgame.LockedFrame.FrameID = fspgame.CurrFrameID
 	} else if fspgame.State == GameEnd {
 		fspgame.LockedFrame = nil
-		fspgame.Release()
+		fspgame.UpperController.Release()
 	}
 }
 

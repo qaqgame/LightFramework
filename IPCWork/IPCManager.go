@@ -4,7 +4,6 @@ import (
 	"code.holdonbush.top/ServerFramework/common"
 	"fmt"
 	"net"
-	"net/http"
 	"net/rpc"
 	"strconv"
 
@@ -32,14 +31,17 @@ func NewIPCManager(minfo *common.ServerModuleInfo) *IPCManager {
 }
 
 func (ipc *IPCManager) RegisterRPC(m interface{}) {
-	rpc.Register(m)
-	rpc.HandleHTTP()
+	newServer := rpc.NewServer()
+	newServer.Register(m)
+	// rpc.HandleHTTP()
 	l, e := net.Listen("tcp4", ":"+strconv.Itoa(ipc.myPort))
 	ipc.logger.Info("port is", ipc.myPort)
 	if e != nil {
 		ipc.logger.Warn("Listen tcp error", e)
 	}
-	go http.Serve(l, nil)
+
+	go newServer.Accept(l)
+	//go http.Serve(l, nil)
 }
 
 func (ipc *IPCManager) Clean() {
@@ -55,13 +57,21 @@ func (ipc *IPCManager) Stop() {
 }
 
 func (ipc *IPCManager) CallRpc(args, reply interface{}, port int, rpcname string) bool {
-	c, err := rpc.DialHTTP("tcp4", "127.0.0.1:"+strconv.Itoa(port))
+	address, err := net.ResolveTCPAddr("tcp4", "127.0.0.1:"+strconv.Itoa(port))
+	if err != nil {
+		panic(err)
+	}
+
+	c, err := net.DialTCP("tcp4", nil, address)
 	defer c.Close()
 	if err != nil {
 		ipc.logger.Warn("Dial tcp error:", err)
 	}
 
-	err = c.Call(rpcname, args, reply)
+	client := rpc.NewClient(c)
+	defer client.Close()
+
+	err = client.Call(rpcname, args, reply)
 	if err == nil {
 		return true
 	}
