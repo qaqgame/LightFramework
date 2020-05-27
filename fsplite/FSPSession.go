@@ -221,7 +221,7 @@ func (fspsession *FSPSession) HeartBeat() {
 
 // Tick : tick session, update kcp state
 func (fspsession *FSPSession) Tick(currentTime uint32) {
-	//fspsession.HeartBeat()
+	// fspsession.HeartBeat()
 	fspsession.DoReceiveInMain()
 
 	current := currentTime
