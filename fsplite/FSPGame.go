@@ -192,9 +192,12 @@ func (fspgame *FSPGame) handleClientMsg(player *FSPPlayer, msg *FSPMessage) {
 		fspgame.SetFlag(player.IdInGame, &fspgame.gameEndFlag, "gameendflag")
 		fspgame.logger.Info("gameendflag value: ", fspgame.gameEndFlag)
 		fspgame.UpperController.OnGameEndCallBack(player, msg)
+		fmt.Println("game end flag full: ", fspgame.isFlagFull(fspgame.gameEndFlag))
 	case GameExit:
 		fspgame.HandleGameExit(player, msg)
 		fspgame.logger.Info("receive gameexit cmd from player id :", player.ID)
+	case GameEndMsg:
+		fspgame.UpperController.Release()
 	default:
 		fspgame.AddMsgToCurrFrame(player.IdInGame, msg)
 	}
@@ -202,7 +205,7 @@ func (fspgame *FSPGame) handleClientMsg(player *FSPPlayer, msg *FSPMessage) {
 
 // HandleGameExit :
 func (fspgame *FSPGame) HandleGameExit(fspplayer *FSPPlayer, msg *FSPMessage) {
-	fspgame.AddMsgToCurrFrame(fspplayer.IdInGame, msg)
+	// fspgame.AddMsgToCurrFrame(fspplayer.IdInGame, msg)
 	player := fspgame.GetPlayer(fspplayer.ID)
 	if player != nil {
 		player.WaitForExit = true
@@ -212,6 +215,7 @@ func (fspgame *FSPGame) HandleGameExit(fspplayer *FSPPlayer, msg *FSPMessage) {
 			fspgame.onGameExit(player.ID)
 		}
 	}
+	// fspgame.UpperController.Release()
 }
 
 // AddMsgToCurrFrame : add game related msg to lockedframe
@@ -269,14 +273,11 @@ func (fspgame *FSPGame) EnterFrame() {
 	}
 
 	// only when state is RoundBegin or ControlStart, can we increase CurrFrameID
-	if fspgame.State == RoundBegin || fspgame.State == ControlStart {
+	if fspgame.State == RoundBegin || fspgame.State == ControlStart || fspgame.State == GameEnd {
 		fspgame.CurrFrameID++
 		fspgame.LockedFrame = new(FSPFrame)
 		fspgame.LockedFrame.Msgs = make([]*FSPMessage,0)
 		fspgame.LockedFrame.FrameID = fspgame.CurrFrameID
-	} else if fspgame.State == GameEnd {
-		fspgame.LockedFrame = nil
-		fspgame.UpperController.Release()
 	}
 }
 
@@ -320,12 +321,23 @@ func (fspgame *FSPGame) OnStateGameCreate() {
 func (fspgame *FSPGame) OnStateGameBegin() {
 	// TODO: 是否需要检测玩家的退出情况，如果玩家在游戏回合开始前退出，应该是游戏结束还是继续游戏，只是该玩家无行动而已。
 
+	//
+	if fspgame.isFlagFull(fspgame.gameEndFlag) {
+		// TODO: param1, param2 : 额外信息。
+		fspgame.SetGameState(GameEnd, NormalExit, 0)
+		v := fspgame.UpperController.CreateGameEndMsg()
+		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		fspgame.AddCmdToCurrFrame(GameEnd, v)
+		fspgame.UpperController.OnGameEndMsgAddCallBack()
+	}
+
 	if fspgame.isFlagFull(fspgame.roundBeginFlag) {
 		fspgame.SetGameState(RoundBegin, 0, 0)
 		fspgame.IncRoundID()
 		fspgame.ClearRound()
 		//get content via upper FSPGameI interface
 		v := fspgame.UpperController.CreateRoundMsg()
+		fmt.Println("roundmsgv: ",v)
 		fspgame.AddCmdToCurrFrame(RoundBegin, v)
 		fspgame.UpperController.OnRoundBeginMsgAddCallBack()
 	}
@@ -334,6 +346,17 @@ func (fspgame *FSPGame) OnStateGameBegin() {
 // OnStateRoundBegin : listen controlstart
 func (fspgame *FSPGame) OnStateRoundBegin() {
 	// TODO: 是否需要检测玩家的退出情况，如果玩家在游戏回合开始前退出，应该是游戏结束还是继续游戏，只是该玩家无行动而已。
+
+
+	//
+	if fspgame.isFlagFull(fspgame.gameEndFlag) {
+		// TODO: param1, param2 : 额外信息。
+		fspgame.SetGameState(GameEnd, NormalExit, 0)
+		v := fspgame.UpperController.CreateGameEndMsg()
+		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		fspgame.AddCmdToCurrFrame(GameEnd, v)
+		fspgame.UpperController.OnGameEndMsgAddCallBack()
+	}
 
 	//
 	if fspgame.isFlagFull(fspgame.controlStartFlag) {
@@ -344,11 +367,23 @@ func (fspgame *FSPGame) OnStateRoundBegin() {
 		fspgame.AddCmdToCurrFrame(ControlStart, v)
 		fspgame.UpperController.OnControlStartMsgAddCallBack()
 	}
+
+
 }
 
 // OnStateControlStart : listen RoundEnd
 func (fspgame *FSPGame) OnStateControlStart() {
 	// TODO: 是否需要检测玩家的退出情况，如果玩家在游戏回合开始前退出，应该是游戏结束还是继续游戏，只是该玩家无行动而已。
+
+	//
+	if fspgame.isFlagFull(fspgame.gameEndFlag) {
+		// TODO: param1, param2 : 额外信息。
+		fspgame.SetGameState(GameEnd, NormalExit, 0)
+		v := fspgame.UpperController.CreateGameEndMsg()
+		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		fspgame.AddCmdToCurrFrame(GameEnd, v)
+		fspgame.UpperController.OnGameEndMsgAddCallBack()
+	}
 
 	//
 	if fspgame.isFlagFull(fspgame.roundEndFlag) {
@@ -358,36 +393,42 @@ func (fspgame *FSPGame) OnStateControlStart() {
 		fspgame.AddCmdToCurrFrame(RoundEnd, v)
 		fspgame.UpperController.OnRoundEndMsgAddCallBack()
 	}
-
-	//
-	if fspgame.isFlagFull(fspgame.gameEndFlag) {
-		// TODO: param1, param2 : 额外信息。
-		fspgame.SetGameState(GameEnd, NormalExit, 0)
-		v := fspgame.UpperController.CreateGameEndMsg()
-		fspgame.AddCmdToCurrFrame(GameEnd, v)
-		fspgame.UpperController.OnGameEndMsgAddCallBack()
-	}
 }
 
 // OnStateRoundEnd :
 func (fspgame *FSPGame) OnStateRoundEnd() {
 	// TODO: 是否需要检测玩家的退出情况，如果玩家在游戏回合开始前退出，应该是游戏结束还是继续游戏，只是该玩家无行动而已。
 
-	if fspgame.isFlagFull(fspgame.roundBeginFlag) {
-		fspgame.SetGameState(RoundBegin, 0, 0)
-		fspgame.ClearRound()
-		fspgame.IncRoundID()
-		fspgame.AddCmdToCurrFrame(RoundBegin, []byte("RoundBegin"))
+	//
+	if fspgame.isFlagFull(fspgame.gameEndFlag) {
+		// TODO: param1, param2 : 额外信息。
+		fspgame.SetGameState(GameEnd, NormalExit, 0)
+		v := fspgame.UpperController.CreateGameEndMsg()
+		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		fspgame.AddCmdToCurrFrame(GameEnd, v)
+		fspgame.UpperController.OnGameEndMsgAddCallBack()
 	}
 
+
+	if fspgame.isFlagFull(fspgame.roundBeginFlag) {
+		//fspgame.SetGameState(RoundBegin, 0, 0)
+		//fspgame.ClearRound()
+		//fspgame.IncRoundID()
+		//fspgame.AddCmdToCurrFrame(RoundBegin, []byte("RoundBegin"))
+		fspgame.SetGameState(RoundBegin, 0, 0)
+		fspgame.IncRoundID()
+		fspgame.ClearRound()
+		//get content via upper FSPGameI interface
+		v := fspgame.UpperController.CreateRoundMsg()
+		fmt.Println("roundmsgv: ",v)
+		fspgame.AddCmdToCurrFrame(RoundBegin, v)
+		fspgame.UpperController.OnRoundBeginMsgAddCallBack()
+	}
 }
 
 // OnStateGameEnd :
 func (fspgame *FSPGame) OnStateGameEnd() {
-	if fspgame.onGameEnd != nil {
-		fspgame.onGameEnd(int32(fspgame.stateParam1))
-		fspgame.onGameEnd = nil
-	}
+
 }
 
 // OnGameBeginCallBack()
@@ -472,6 +513,7 @@ func (fspgame *FSPGame) SetGameState(gamestate, param1, param2 int) {
 func (fspgame *FSPGame) isFlagFull(flag int16) bool {
 	if len(fspgame.playerList) > 0 {
 		for _, v := range fspgame.playerList {
+			// fmt.Println("in is FlagFull, idInGame is: ", v.IdInGame)
 			if (flag & (0x01 << v.IdInGame)) == 0 {
 				return false
 			}

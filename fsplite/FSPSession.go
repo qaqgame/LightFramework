@@ -1,6 +1,7 @@
 package fsplite
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -106,11 +107,12 @@ func (fspsession *FSPSession) Active(addr *net.UDPAddr) {
 	fspsession.isActive = true
 
 	// remote client network circumstance changes
-	if fspsession.remoteEndPoint == nil || fspsession.remoteEndPoint.String() != addr.String() {
+	if fspsession.remoteEndPoint == nil || fspsession.remoteEndPoint.IP.String() != addr.IP.String() {
 		logrus.Warn("RemoteEndPoint Changed", addr.String()," ", fspsession.remoteEndPoint.String())
 		fspsession.isEndPointChanged = true
-		fspsession.remoteEndPoint = addr
+		// fspsession.isEndPointChanged = true
 	}
+	fspsession.remoteEndPoint = addr
 }
 
 // SetAuth : set auth
@@ -203,9 +205,25 @@ func (fspsession *FSPSession) DoReceiveInMain() {
 	}
 }
 
+func (fspsession *FSPSession) HeartBeat() {
+	fspheartbeat := FSPDataS2C{
+		Frames: []*FSPFrame{
+			{FrameID:0, Msgs: []*FSPMessage{{Cmd:10}}},
+		},
+	}
+
+	v,err := proto.Marshal(&fspheartbeat)
+	if err != nil {
+		fmt.Println("Heart Beat to client error: ",err)
+	}
+	fspsession.Kcp.Send(v)
+}
+
 // Tick : tick session, update kcp state
 func (fspsession *FSPSession) Tick(currentTime uint32) {
+	//fspsession.HeartBeat()
 	fspsession.DoReceiveInMain()
+
 	current := currentTime
 	if fspsession.needkcpupdateflag || current >= fspsession.nextkcpupdatetime {
 		fspsession.Kcp.Update()

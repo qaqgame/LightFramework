@@ -17,7 +17,11 @@ type (
 
 // NewQueue : Create a new queue
 func NewQueue() *Queue {
-	return &Queue{nil, nil, 0}
+	queue :=  new(Queue)
+	queue.top = nil
+	queue.rear = nil
+	queue.length = 0
+	return queue
 }
 
 // Len : 获取队列长度

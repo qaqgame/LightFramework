@@ -87,7 +87,9 @@ func (netManager *NetManager) SetAuthCmd(cmd uint32) {
 	netManager.authCmd = cmd
 }
 
-func (netManager *NetManager) RegisterProtoMsg(name string, value proto.Message)  {
+func (netManager *NetManager) RegisterProtoMsg(value proto.Message)  {
+	// fmt.Println(reflect.TypeOf(value).String())
+	name := reflect.TypeOf(value).String()
 	netManager.protomessages[name] = value
 }
 

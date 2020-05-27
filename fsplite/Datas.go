@@ -43,9 +43,11 @@ const (
 	// RoundEnd : 回合结束
 	RoundEnd
 	// GameEnd : 游戏结束
-	GameEnd
+	GameEndMsg
 	// GameExit :
 	GameExit
+	// GameEndMsg
+	GameEnd = 8
 )
 
 const (

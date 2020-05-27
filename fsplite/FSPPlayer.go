@@ -1,6 +1,8 @@
 package fsplite
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+)
 
 // FSPPlayer :
 type FSPPlayer struct {
@@ -126,3 +128,5 @@ func (fspplayer *FSPPlayer) ClearRound() {
 	fspplayer.frameCache.Clear()
 	fspplayer.lastFrameID = 0
 }
+
+
