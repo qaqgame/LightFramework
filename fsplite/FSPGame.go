@@ -326,7 +326,7 @@ func (fspgame *FSPGame) OnStateGameBegin() {
 		// TODO: param1, param2 : 额外信息。
 		fspgame.SetGameState(GameEnd, NormalExit, 0)
 		v := fspgame.UpperController.CreateGameEndMsg()
-		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		//fmt.Println("gameEndMsg: ",v,string(v), len(v))
 		fspgame.AddCmdToCurrFrame(GameEnd, v)
 		fspgame.UpperController.OnGameEndMsgAddCallBack()
 	}
@@ -337,7 +337,7 @@ func (fspgame *FSPGame) OnStateGameBegin() {
 		fspgame.ClearRound()
 		//get content via upper FSPGameI interface
 		v := fspgame.UpperController.CreateRoundMsg()
-		fmt.Println("roundmsgv: ",v)
+		//fmt.Println("roundmsgv: ",v)
 		fspgame.AddCmdToCurrFrame(RoundBegin, v)
 		fspgame.UpperController.OnRoundBeginMsgAddCallBack()
 	}
@@ -353,7 +353,7 @@ func (fspgame *FSPGame) OnStateRoundBegin() {
 		// TODO: param1, param2 : 额外信息。
 		fspgame.SetGameState(GameEnd, NormalExit, 0)
 		v := fspgame.UpperController.CreateGameEndMsg()
-		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		//fmt.Println("gameEndMsg: ",v,string(v), len(v))
 		fspgame.AddCmdToCurrFrame(GameEnd, v)
 		fspgame.UpperController.OnGameEndMsgAddCallBack()
 	}
@@ -380,7 +380,7 @@ func (fspgame *FSPGame) OnStateControlStart() {
 		// TODO: param1, param2 : 额外信息。
 		fspgame.SetGameState(GameEnd, NormalExit, 0)
 		v := fspgame.UpperController.CreateGameEndMsg()
-		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		//fmt.Println("gameEndMsg: ",v,string(v), len(v))
 		fspgame.AddCmdToCurrFrame(GameEnd, v)
 		fspgame.UpperController.OnGameEndMsgAddCallBack()
 	}
@@ -404,7 +404,7 @@ func (fspgame *FSPGame) OnStateRoundEnd() {
 		// TODO: param1, param2 : 额外信息。
 		fspgame.SetGameState(GameEnd, NormalExit, 0)
 		v := fspgame.UpperController.CreateGameEndMsg()
-		fmt.Println("gameEndMsg: ",v,string(v), len(v))
+		//fmt.Println("gameEndMsg: ",v,string(v), len(v))
 		fspgame.AddCmdToCurrFrame(GameEnd, v)
 		fspgame.UpperController.OnGameEndMsgAddCallBack()
 	}
@@ -420,7 +420,7 @@ func (fspgame *FSPGame) OnStateRoundEnd() {
 		fspgame.ClearRound()
 		//get content via upper FSPGameI interface
 		v := fspgame.UpperController.CreateRoundMsg()
-		fmt.Println("roundmsgv: ",v)
+		//fmt.Println("roundmsgv: ",v)
 		fspgame.AddCmdToCurrFrame(RoundBegin, v)
 		fspgame.UpperController.OnRoundBeginMsgAddCallBack()
 	}

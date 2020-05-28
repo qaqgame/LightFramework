@@ -95,7 +95,7 @@ func (fspplayer *FSPPlayer) sendinterval(frame *FSPFrame) bool {
 // OnRecvFromSession : listener of session
 func (fspplayer *FSPPlayer) OnRecvFromSession(message *FSPDataC2S) {
 	if fspplayer.session.isEndPointChanged {
-		fspplayer.hasAuthed = false
+		// fspplayer.hasAuthed = false
 		fspplayer.session.isEndPointChanged = false
 	}
 	if fspplayer.recvListener != nil {
@@ -116,6 +116,7 @@ func (fspplayer *FSPPlayer) SetAuth(auth int32) {
 // HasAuthed : check if authed
 func (fspplayer *FSPPlayer) HasAuthed() bool {
 	return fspplayer.hasAuthed
+	// return true
 }
 
 // ISLose :

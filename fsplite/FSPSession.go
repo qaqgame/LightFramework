@@ -22,8 +22,12 @@ type FSPSession struct {
 	// KCP related
 	Kcp               *kcp.KCP
 	recvData          chan []byte
-	datachan1         *chan []byte
-	datachan2         *chan []byte
+	// datachan1         *chan []byte
+	// datachan2         *chan []byte
+	//---------
+	dataQueue1        *Queue
+	dataQueue2        *Queue
+	//----------
 	nextkcpupdatetime uint32
 	needkcpupdateflag bool
 
@@ -57,10 +61,14 @@ func NewFSPSession(_sid uint32, _sender FSPSender) *FSPSession {
 
 	fspsesssion.remoteEndPoint = nil
 	fspsesssion.recvData = make(chan []byte, 128)
-	tmp1 := make(chan []byte, 128)
-	fspsesssion.datachan1 = &tmp1
-	tmp2 := make(chan []byte, 128)
-	fspsesssion.datachan2 = &tmp2
+	//tmp1 := make(chan []byte, 128)
+	//fspsesssion.datachan1 = &tmp1
+	//tmp2 := make(chan []byte, 128)
+	//fspsesssion.datachan2 = &tmp2
+	//---------
+	fspsesssion.dataQueue1 = NewQueue()
+	fspsesssion.dataQueue2 = NewQueue()
+	//---------
 
 	fspsesssion.closeDoreceive = make(chan int, 2)
 	fspsesssion.needkcpupdateflag = false
@@ -153,56 +161,93 @@ func (fspsession *FSPSession) Send(frame *FSPFrame) bool {
 }
 
 // StopReceive : signal of close goroutine : DoReceiveInMain
-func (fspsession *FSPSession) StopReceive() {
-	fspsession.closeDoreceive <- -1
-}
+//func (fspsession *FSPSession) StopReceive() {
+//	fspsession.closeDoreceive <- -1
+//}
 
 // DoReceiveInGateway : after receive data in function DoReceiveInGateway of fsplite.gateway,
 // data will be sent to channel recvData for corresponding session
 func (fspsession *FSPSession) DoReceiveInGateway(buf []byte, size int) {
-	fspsession.recvData <- buf[:size]
-	*fspsession.datachan1 <- buf[:size]
+	// fspsession.recvData <- buf[:size]
+	v := buf[:size]
+	// *fspsession.datachan1 <- v
+	//----------
+	fspsession.dataQueue1.Push(v)
+	//----------
 }
 
 // DoReceiveInMain : a independent goroutine.
 // keep running as long as session created, read data from channel recvData and handle it.
 func (fspsession *FSPSession) DoReceiveInMain() {
 	// a flag to show if the goroutine is running.
-	fspsession.ReceiveInMainActive = true
-	fspsession.datachan1, fspsession.datachan2 = fspsession.datachan2, fspsession.datachan1
 
-	for true {
-		select {
-		// Reading from recvdata channal.
-		case data := <- *fspsession.datachan2:
-			fspsession.logger.Debug("DoReceiveInMain of FSPSession received data len: ", len(data))
-			ret := fspsession.Kcp.Input(data, true, true)
-			if ret < 0 {
-				fspsession.logger.Warn("DeReceiveInMain of FSPSession, data is not a correct pakcage, input ret : ", ret)
-				continue
-			}
-			fspsession.needkcpupdateflag = true
-			for size := fspsession.Kcp.PeekSize(); size > 0; size = fspsession.Kcp.PeekSize() {
-				buf := make([]byte, size)
-				if fspsession.Kcp.Recv(buf) > 0 {
-					if fspsession.listener != nil {
-						data := new(FSPDataC2S)
-						err := proto.Unmarshal(buf, data)
-						if err != nil {
-							fspsession.logger.Warn("Can not Unmarsh as a proto message")
-							continue
-						}
-						// handle data received
-						fspsession.listener(data)
-					} else {
-						fspsession.logger.Warn("找不到接收者")
+	//-----Origin
+	//fspsession.ReceiveInMainActive = true
+	//fspsession.datachan1, fspsession.datachan2 = fspsession.datachan2, fspsession.datachan1
+	//
+	//for true {
+	//	select {
+	//	// Reading from recvdata channal.
+	//	case data := <- *fspsession.datachan2:
+	//		// fspsession.logger.Debug("DoReceiveInMain of FSPSession received data len: ", len(data))
+	//		ret := fspsession.Kcp.Input(data, true, true)
+	//		if ret < 0 {
+	//			fspsession.logger.Warn("DeReceiveInMain of FSPSession, data is not a correct pakcage, input ret : ", ret)
+	//			continue
+	//		}
+	//		fspsession.needkcpupdateflag = true
+	//		for size := fspsession.Kcp.PeekSize(); size > 0; size = fspsession.Kcp.PeekSize() {
+	//			buf := make([]byte, size)
+	//			if fspsession.Kcp.Recv(buf) > 0 {
+	//				if fspsession.listener != nil {
+	//					data := new(FSPDataC2S)
+	//					err := proto.Unmarshal(buf, data)
+	//					if err != nil {
+	//						fspsession.logger.Warn("Can not Unmarsh as a proto message")
+	//						continue
+	//					}
+	//					// handle data received
+	//					fspsession.listener(data)
+	//				} else {
+	//					fspsession.logger.Warn("找不到接收者")
+	//				}
+	//			}
+	//		}
+	//	default:
+	//		return
+	//	}
+	//}
+	//----
+
+	//-----New
+	fspsession.dataQueue1,fspsession.dataQueue2 = fspsession.dataQueue2,fspsession.dataQueue1
+	for fspsession.dataQueue2.Len() > 0 {
+		data := fspsession.dataQueue2.Pop().([]byte)
+		ret := fspsession.Kcp.Input(data, true, true)
+		if ret < 0 {
+			fspsession.logger.Warn("DeReceiveInMain of FSPSession, data is not a correct pakcage, input ret : ", ret)
+			continue
+		}
+		fspsession.needkcpupdateflag = true
+		for size := fspsession.Kcp.PeekSize(); size > 0; size = fspsession.Kcp.PeekSize() {
+			buf := make([]byte, size)
+			if fspsession.Kcp.Recv(buf) > 0 {
+				if fspsession.listener != nil {
+					data := new(FSPDataC2S)
+					err := proto.Unmarshal(buf, data)
+					if err != nil {
+						fspsession.logger.Warn("Can not Unmarsh as a proto message")
+						continue
 					}
+					// handle data received
+					fspsession.listener(data)
+				} else {
+					fspsession.logger.Warn("找不到接收者")
 				}
 			}
-		default:
-			return
 		}
 	}
+	//-----
 }
 
 func (fspsession *FSPSession) HeartBeat() {

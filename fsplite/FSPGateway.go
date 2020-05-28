@@ -130,11 +130,11 @@ func (fspgateway *FSPGateway) Start() {
 func (fspgateway *FSPGateway) Close() {
 	fspgateway.IsRunning = false
 
-	for _, v := range fspgateway.mapSession {
-		if v.ReceiveInMainActive {
-			v.StopReceive()
-		}
-	}
+	//for _, v := range fspgateway.mapSession {
+	//	if v.ReceiveInMainActive {
+	//		v.StopReceive()
+	//	}
+	//}
 
 	// if fspgateway.recvRunning {
 	// 	fspgateway.closeSignal <- -1
@@ -186,9 +186,9 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 		}
 		// fspgateway.logger.Info("all: ", fspgateway.receiveBuffer[:n])
 		// fspgateway.logger.Info("tmp: ", tmp, "len: ", len(tmp))
-		if fspmsg.String() != "" {
-			fspgateway.logger.Warn("fspmsg: ",fspmsg)
-		}
+		//if fspmsg.String() != "" {
+		//	fspgateway.logger.Warn("fspmsg: ",fspmsg)
+		//}
 		var session *FSPSession = nil
 		// tmp1 := binary.LittleEndian.Uint32(sidbuf)
 		// fspgateway.logger.Warn("LittleEndian res: ", tmp1)
@@ -197,7 +197,7 @@ func (fspgateway *FSPGateway) DoReceiveInGoroutine() {
 			// fspgateway.logger.Warn("Sid 为0，丢弃该包")
 			return
 		} else {
-			fspgateway.logger.Warn("Sid 为 : ", sid)
+			fspgateway.logger.Info("Sid 为 : ", sid)
 			session = fspgateway.GetSession(sid)
 		}
 
