@@ -1,6 +1,10 @@
 package fsplite
 
-import "time"
+import (
+	"io/ioutil"
+	"net/http"
+	"time"
+)
 
 // FSPManager : fsplite manager
 type FSPManager struct {
@@ -11,6 +15,16 @@ type FSPManager struct {
 	useCostomEnterFrame bool // 用户自定义方式
 }
 
+func getExternalIP() string {
+	resp, err := http.Get("http://myexternalip.com/raw")
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	content, _ := ioutil.ReadAll(resp.Body)
+	return string(content)
+}
+
 // NewFSPManager : create a manager
 func NewFSPManager(_port int) *FSPManager {
 	fspmanager := new(FSPManager)
@@ -18,10 +32,9 @@ func NewFSPManager(_port int) *FSPManager {
 	// gateway will automatically start after created
 	fspmanager.gateway = NewFSPGateway(_port)
 	// use default param creator to crate a new param
-	fspmanager.param = NewDefaultFspParam("120.79.240.163", _port)
+	fspmanager.param = NewDefaultFspParam(getExternalIP(), _port)
 	fspmanager.lastticks = 0
 	fspmanager.useCostomEnterFrame = false
-
 	return fspmanager
 }
 
