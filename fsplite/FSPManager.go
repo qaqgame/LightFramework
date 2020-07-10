@@ -1,8 +1,6 @@
 package fsplite
 
 import (
-	"io/ioutil"
-	"net/http"
 	"time"
 )
 
@@ -15,24 +13,16 @@ type FSPManager struct {
 	useCostomEnterFrame bool // 用户自定义方式
 }
 
-func getExternalIP() string {
-	resp, err := http.Get("http://myexternalip.com/raw")
-	if err != nil {
-		return ""
-	}
-	defer resp.Body.Close()
-	content, _ := ioutil.ReadAll(resp.Body)
-	return string(content)
-}
+
 
 // NewFSPManager : create a manager
-func NewFSPManager(_port int) *FSPManager {
+func NewFSPManager(_port int, ipModel int) *FSPManager {
 	fspmanager := new(FSPManager)
 	fspmanager.mapGame = make(map[uint32]FSPGameI)
 	// gateway will automatically start after created
 	fspmanager.gateway = NewFSPGateway(_port)
 	// use default param creator to crate a new param
-	fspmanager.param = NewDefaultFspParam(getExternalIP(), _port)
+	fspmanager.param = NewDefaultFspParam("", _port, ipModel)
 	fspmanager.lastticks = 0
 	fspmanager.useCostomEnterFrame = false
 	return fspmanager
